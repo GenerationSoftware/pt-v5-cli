@@ -3,7 +3,7 @@
   "description": "PoolTogether V5 Command Line Interface",
   "author": "PoolTogether Inc",
   "license": "GPL-3.0-only",
-  "version": "0.0.1-beta.45",
+  "version": "0.0.1-beta.46",
   "repository": "https://github.com/pooltogether/v5-cli",
   "homepage": "https://github.com/pooltogether/v5-cli",
   "bugs": "https://github.com/pooltogether/v5-cli/issues",
