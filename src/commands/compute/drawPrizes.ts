@@ -70,7 +70,7 @@ export default class DrawPrizes extends Command {
 
     const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
 
-    const drawId = await prizePoolContract?.getLastClosedDrawId();
+    const drawId = await prizePoolContract?.getLastAwardedDrawId();
 
     this.warn("Failed to calculate Draw Prizes (" + error + ")");
     const statusFailure = updateStatusFailure(DrawPrizes.statusLoading.createdAt, error);
@@ -93,7 +93,7 @@ export default class DrawPrizes extends Command {
 
     const readProvider = getProvider(chainId);
     const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
-    const drawId = await prizePoolContract?.getLastClosedDrawId();
+    const drawId = await prizePoolContract?.getLastAwardedDrawId();
     this.log(`DrawID: #${drawId.toString()}`);
 
     /* -------------------------------------------------- */
