@@ -24,7 +24,7 @@ $ npm install -g @generationsoftware/pt-v5-cli
 $ ptv5 COMMAND
 running command...
 $ ptv5 (--version)
-@generationsoftware/pt-v5-cli/0.0.1-beta.46 darwin-arm64 node-v18.16.0
+@generationsoftware/pt-v5-cli/0.0.1-beta.47 darwin-arm64 node-v18.16.0
 $ ptv5 --help [COMMAND]
 USAGE
   $ ptv5 COMMAND
@@ -66,9 +66,7 @@ EXAMPLES
     "tier": 3,
     "prizeIndex": 11,
     "claimed": true,
-    "amount": "1633936709514027714",
-    "userTwab": "9825531597725820105644",
-    "totalSupplyTwab": "17763495565196552485474598"
+    "amount": "1633936709514027714"
   },
   {
     "vault": "0x0bfe04201c496a9994b920deb6087a60bdadfbbb",
@@ -76,9 +74,7 @@ EXAMPLES
     "tier": 2,
     "prizeIndex": 1,
     "claimed": false,
-    "amount": "1633936709514027714",
-    "userTwab": "9722898152768139799112",
-    "totalSupplyTwab": "17763495565196552485474598"
+    "amount": "1633936709514027714"
   }
 ]
 ```
@@ -112,11 +108,6 @@ EXAMPLES
       "0": "271304907889060131200",
       "1": "45062486366179690039",
       "2": "1633936709514027714"
-    },
-    "tierAccrualDurationInDraws": {
-      "0": "13",
-      "1": "1",
-      "2": "1"
     },
     "vaultPortions": {
       "0x0410cae69dd01f58224d54881648e35c6cb874fa": "12491920408565",

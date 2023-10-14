@@ -145,25 +145,12 @@ export default class DrawPrizes extends Command {
 
     const claimsWithPrizeAmounts = addTierPrizeAmountsToClaims(claims, tierPrizeAmounts);
 
-    // NEW
-    this.log(``);
-    this.log(`getTierAccrualDurationsInDraws`);
-    const tierAccrualDurationsInDraws: Record<string, BigNumber> =
-      await getTierAccrualDurationsInDraws(prizePoolContract, prizePoolInfo.tiersRangeArray);
-
-    this.log(`addUserAndTotalSupplyTwabsToClaims`);
-    const claimsWithUserAndTotalSupplyTwab = await addUserAndTotalSupplyTwabsToClaims(
-      claimsWithPrizeAmounts,
-      tierAccrualDurationsInDraws,
-      prizePoolContract
-    );
-
     /* -------------------------------------------------- */
     // Write to Disk
     /* -------------------------------------------------- */
     this.log(`writeToOutput prizes`);
-    writeToOutput(outDirWithSchema, "prizes", claimsWithUserAndTotalSupplyTwab);
-    writePrizesToOutput(outDirWithSchema, claimsWithUserAndTotalSupplyTwab);
+    writeToOutput(outDirWithSchema, "prizes", claimsWithPrizeAmounts);
+    writePrizesToOutput(outDirWithSchema, claimsWithPrizeAmounts);
 
     this.log(`updateStatusSuccess`);
     const statusSuccess = updateStatusSuccess(DrawPrizes.statusLoading.createdAt, {
@@ -175,7 +162,6 @@ export default class DrawPrizes extends Command {
       prizePoolReserve: prizePoolInfo.reserve,
       amountsTotal: sumPrizeAmounts(tierPrizeAmounts),
       tierPrizeAmounts: mapTierPrizeAmountsToString(tierPrizeAmounts),
-      tierAccrualDurationInDraws: mapBigNumbersToStrings(tierAccrualDurationsInDraws),
       vaultPortions: mapBigNumbersToStrings(
         await getVaultPortions(Number(chainId), prizePoolContract, prizePoolInfo)
       ),
@@ -254,17 +240,6 @@ export function mapBigNumbersToStrings(bigNumbers: Record<string, BigNumber>) {
 
   return obj;
 }
-
-const getTierAccrualDurationsInDraws = async (
-  prizePoolContract: Contract,
-  tiers: number[]
-): Promise<Record<string, BigNumber>> => {
-  const tierAccrualDurations: Record<string, BigNumber> = {};
-  for (let tier of tiers) {
-    tierAccrualDurations[tier] = await prizePoolContract.getTierAccrualDurationInDraws(tier);
-  }
-  return tierAccrualDurations;
-};
 
 const getVaultPortions = async (
   chainId: number,

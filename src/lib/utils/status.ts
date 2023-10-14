@@ -9,7 +9,6 @@ export interface SuccessStats {
   prizePoolReserve: string;
   amountsTotal: string;
   tierPrizeAmounts: any;
-  tierAccrualDurationInDraws: any;
   vaultPortions: any;
 }
 
