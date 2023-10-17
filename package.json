@@ -1,12 +1,15 @@
 {
   "name": "@generationsoftware/pt-v5-cli",
   "description": "PoolTogether V5 Command Line Interface",
-  "author": "PoolTogether Inc",
-  "license": "GPL-3.0-only",
+  "author": {
+    "name": "G9 Software Inc.",
+    "url": "https://github.com/generationsoftware"
+  },
+  "license": "MIT",
   "version": "0.0.1-beta.48",
-  "repository": "https://github.com/pooltogether/v5-cli",
-  "homepage": "https://github.com/pooltogether/v5-cli",
-  "bugs": "https://github.com/pooltogether/v5-cli/issues",
+  "repository": "https://github.com/generationsoftware/pt-v5-cli",
+  "homepage": "https://github.com/generationsoftware/pt-v5-cli",
+  "bugs": "https://github.com/generationsoftware/pt-v5-cli/issues",
   "main": "dist/index.js",
   "files": [
     "/bin",
@@ -35,7 +38,7 @@
     "@ethersproject/bignumber": "^5.5.0",
     "@ethersproject/contracts": "^5.5.0",
     "@ethersproject/providers": "^5.5.3",
-    "@generationsoftware/pt-v5-utils-js": "0.0.1-beta.48",
+    "@generationsoftware/pt-v5-utils-js": "0.0.1-beta.50",
     "@oclif/core": "^2.8.5",
     "@oclif/plugin-help": "^5",
     "@oclif/plugin-plugins": "^3.0.1",
