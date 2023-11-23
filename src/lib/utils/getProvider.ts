@@ -11,6 +11,8 @@ const providers: Providers = {
   // testnets
   5: new JsonRpcProvider(process.env.ETHEREUM_GOERLI_RPC_URL),
   420: new JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL),
+  421614: new JsonRpcProvider(process.env.ARBITRUM_SEPOLIA_RPC_URL),
+  11155420: new JsonRpcProvider(process.env.OPTIMISM_SEPOLIA_RPC_URL),
 }
 
 export const getProvider = (chainId: string): JsonRpcProvider => {
