@@ -24,7 +24,7 @@ $ npm install -g @generationsoftware/pt-v5-cli
 $ ptv5 COMMAND
 running command...
 $ ptv5 (--version)
-@generationsoftware/pt-v5-cli/1.0.2 darwin-arm64 node-v18.16.0
+@generationsoftware/pt-v5-cli/1.0.3 darwin-arm64 node-v18.16.0
 $ ptv5 --help [COMMAND]
 USAGE
   $ ptv5 COMMAND
