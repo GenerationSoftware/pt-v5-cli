@@ -6,8 +6,8 @@ import {
   getPrizePoolInfo,
   Claim,
   PrizePoolInfo,
-  getSubgraphVaults,
-  populateSubgraphVaultAccounts,
+  getSubgraphPrizeVaults,
+  populateSubgraphPrizeVaultAccounts,
   getWinnersClaims,
   flagClaimedRpc,
 } from "@generationsoftware/pt-v5-utils-js";
@@ -114,19 +114,24 @@ export default class DrawPrizes extends Command {
       (tier) => (tierPrizeAmounts[tier[0]] = tier[1].amount)
     );
 
-    // #2. Collect all vaults
-    this.log(`getSubgraphVaults`);
-    let vaults = await getSubgraphVaults(Number(chainId));
-    if (vaults.length === 0) {
-      throw new Error("Claimer: No vaults found in subgraph");
+    // #2. Collect all prizeVaults
+    this.log(`getSubgraphPrizeVaults`);
+    let prizeVaults = await getSubgraphPrizeVaults(Number(chainId));
+    if (prizeVaults.length === 0) {
+      throw new Error("Claimer: No prizeVaults found in subgraph");
     }
 
-    // #3. Page through and concat all accounts for all vaults
-    this.log(`populateSubgraphVaultAccounts`);
-    vaults = await populateSubgraphVaultAccounts(Number(chainId), vaults);
+    // #3. Page through and concat all accounts for all prizeVaults
+    this.log(`populateSubgraphPrizeVaultAccounts`);
+    prizeVaults = await populateSubgraphPrizeVaultAccounts(Number(chainId), prizeVaults);
 
     // #4. Determine winners for last draw
-    let claims: Claim[] = await getWinnersClaims(readProvider, prizePoolInfo, contracts, vaults);
+    let claims: Claim[] = await getWinnersClaims(
+      readProvider,
+      prizePoolInfo,
+      contracts,
+      prizeVaults
+    );
 
     // #5. Cross-reference prizes claimed subgraph to flag if a claim has been claimed or not
     claims = await flagClaimedRpc(readProvider, contracts, claims);
@@ -137,11 +142,11 @@ export default class DrawPrizes extends Command {
     this.log(``);
     this.log(`${claims.length.toString()} prizes.`);
 
-    const numAccounts = vaults.reduce(
+    const numAccounts = prizeVaults.reduce(
       (accumulator, vault) => vault.accounts.length + accumulator,
       0
     );
-    this.log(`${numAccounts} accounts deposited across ${vaults.length} vaults.`);
+    this.log(`${numAccounts} accounts deposited across ${prizeVaults.length} prizeVaults.`);
 
     const claimsWithPrizeAmounts = addTierPrizeAmountsToClaims(claims, tierPrizeAmounts);
 
@@ -154,7 +159,7 @@ export default class DrawPrizes extends Command {
 
     this.log(`updateStatusSuccess`);
     const statusSuccess = updateStatusSuccess(DrawPrizes.statusLoading.createdAt, {
-      numVaults: vaults.length,
+      numVaults: prizeVaults.length,
       numTiers: prizePoolInfo.numTiers,
       numPrizeIndices: prizePoolInfo.numPrizeIndices,
       numAccounts,
@@ -246,23 +251,23 @@ const getVaultPortions = async (
   prizePoolContract: Contract,
   prizePoolInfo: PrizePoolInfo
 ) => {
-  const vaultPortions: Record<string, BigNumber> = {};
+  const prizeVaultPortions: Record<string, BigNumber> = {};
 
   const startDrawId = prizePoolInfo.drawId;
   const endDrawId = startDrawId + 1;
 
-  let vaults = await getSubgraphVaults(chainId);
-  if (vaults.length === 0) {
-    throw new Error("Claimer: No vaults found in subgraph");
+  let prizeVaults = await getSubgraphPrizeVaults(chainId);
+  if (prizeVaults.length === 0) {
+    throw new Error("Claimer: No prizeVaults found in subgraph");
   }
 
-  for (let vault of vaults) {
-    vaultPortions[vault.id] = await prizePoolContract.getVaultPortion(
-      vault.id,
+  for (let prizeVault of prizeVaults) {
+    prizeVaultPortions[prizeVault.id] = await prizePoolContract.getVaultPortion(
+      prizeVault.id,
       startDrawId,
       endDrawId
     );
   }
 
-  return vaultPortions;
+  return prizeVaultPortions;
 };
