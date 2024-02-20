@@ -409,10 +409,10 @@
   resolved "https://registry.yarnpkg.com/@gar/promisify/-/promisify-1.1.3.tgz#555193ab2e3bb3b6adc3d551c9c030d9e860daf6"
   integrity sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==
 
-"@generationsoftware/pt-v5-utils-js@1.0.5":
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/@generationsoftware/pt-v5-utils-js/-/pt-v5-utils-js-1.0.5.tgz#72d80e99ec3787d72a26a023525785291102caf9"
-  integrity sha512-4hsu6oafFUXA4Ap5SoNtLD+eVPp2MLIgkx6tIURQ32W9RdGfsqD1ikkft3tbzLesHZUk+Zy1Fjj1V15SJm8cnQ==
+"@generationsoftware/pt-v5-utils-js@1.0.6":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@generationsoftware/pt-v5-utils-js/-/pt-v5-utils-js-1.0.6.tgz#55ee2e68fd12df19fe3c416b3211e52ce6b38969"
+  integrity sha512-aFlozYJnVhcus68uq9FMYTWeHo3A3Cesoq2PXDwpmtVRgPIpiMO5EKp9DolsAYJw0GqSX45k+hetI7C2C3eSwQ==
   dependencies:
     "@pooltogether/contract-list-schema" "^0.1.4"
     "@types/lodash" "^4.14.195"
