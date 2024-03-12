@@ -1,4 +1,4 @@
-import { Status, StatusError } from '../../types'
+import { Status, StatusError } from '../../types.js'
 
 export interface SuccessStats {
   numVaults: number;

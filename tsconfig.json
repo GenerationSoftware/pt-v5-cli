@@ -7,8 +7,12 @@
     "strict": true,
     "target": "esnext",
     "esModuleInterop": true,
+    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
+  },
+  "ts-node": {
+    "esm": true
   },
   "include": [
     "src/**/*"

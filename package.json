@@ -19,7 +19,7 @@
     "/oclif.manifest.json"
   ],
   "bin": {
-    "ptv5": "./bin/run"
+    "ptv5": "./bin/run.js"
   },
   "scripts": {
     "build": "shx rm -rf dist && tsc",
@@ -27,7 +27,7 @@
     "postpack": "shx rm -f oclif.manifest.json",
     "manifest": "oclif manifest",
     "version": "oclif readme && git add README.md",
-    "_ptv5": "./bin/run"
+    "_ptv5": "./bin/run.js"
   },
   "engines": {
     "node": ">=12.0.0"
@@ -38,7 +38,7 @@
     "@ethersproject/bignumber": "^5.5.0",
     "@ethersproject/contracts": "^5.5.0",
     "@ethersproject/providers": "^5.5.3",
-    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.0",
+    "@generationsoftware/pt-v5-utils-js": "file:.yalc/@generationsoftware/pt-v5-utils-js",
     "@oclif/core": "^3",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^4",

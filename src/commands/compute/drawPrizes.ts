@@ -13,18 +13,18 @@ import {
 } from "@generationsoftware/pt-v5-utils-js";
 import * as core from "@actions/core";
 
-import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status";
-import { getProvider } from "../../lib/utils/getProvider";
-import { createOutputPath } from "../../lib/utils/createOutputPath";
-import { createExitCode } from "../../lib/utils/createExitCode";
-import { writeToOutput, writePrizesToOutput } from "../../lib/utils/writeOutput";
+import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
+import { getProvider } from "../../lib/utils/getProvider.js";
+import { createOutputPath } from "../../lib/utils/createOutputPath.js";
+import { createExitCode } from "../../lib/utils/createExitCode.js";
+import { writeToOutput, writePrizesToOutput } from "../../lib/utils/writeOutput.js";
 import {
   sumPrizeAmounts,
   mapTierPrizeAmountsToString,
   addTierPrizeAmountsToClaims,
   addUserAndTotalSupplyTwabsToClaims,
   TierPrizeAmounts,
-} from "../../lib/utils/prizeAmounts";
+} from "../../lib/utils/prizeAmounts.js";
 
 /**
  * @name DrawPrizes
