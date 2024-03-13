@@ -6,7 +6,7 @@
     "url": "https://github.com/generationsoftware"
   },
   "license": "MIT",
-  "version": "1.1.0-beta.0",
+  "version": "1.1.0-beta.1",
   "repository": "https://github.com/generationsoftware/pt-v5-cli",
   "homepage": "https://github.com/generationsoftware/pt-v5-cli",
   "bugs": "https://github.com/generationsoftware/pt-v5-cli/issues",
@@ -23,8 +23,6 @@
   },
   "scripts": {
     "build": "shx rm -rf dist && tsc",
-    "prepack": "oclif manifest && oclif readme",
-    "postpack": "shx rm -f oclif.manifest.json",
     "manifest": "oclif manifest",
     "version": "oclif readme && git add README.md",
     "_ptv5": "./bin/run.js"
@@ -38,7 +36,7 @@
     "@ethersproject/bignumber": "^5.5.0",
     "@ethersproject/contracts": "^5.5.0",
     "@ethersproject/providers": "^5.5.3",
-    "@generationsoftware/pt-v5-utils-js": "file:.yalc/@generationsoftware/pt-v5-utils-js",
+    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.1",
     "@oclif/core": "^3",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^4",
