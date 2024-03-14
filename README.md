@@ -19,6 +19,7 @@ npx @generationsoftware/pt-v5-cli help compute drawPrizes
 # ⌨️ CLI Installation
 
 <!-- usage -->
+
 ```sh-session
 $ npm install -g @generationsoftware/pt-v5-cli
 $ ptv5 COMMAND
@@ -30,6 +31,7 @@ USAGE
   $ ptv5 COMMAND
 ...
 ```
+
 <!-- usagestop -->
 
 # Commands
@@ -101,7 +103,20 @@ EXAMPLES
     "numTiers": 3,
     "numPrizeIndices": 21,
     "numAccounts": 3830,
-    "numPrizes": 21,
+    "prizesByTier": {
+      "0": {
+        "count": 2,
+        "claimed": 1
+      },
+      "1": {
+        "count": 50,
+        "claimed": 44
+      },
+      "2": {
+        "count": 1000,
+        "claimed": 300
+      }
+    },
     "prizePoolReserve": "431450369493570544008",
     "amountsTotal": "318001330964753848953",
     "tierPrizeAmounts": {

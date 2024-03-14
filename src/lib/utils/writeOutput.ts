@@ -35,3 +35,4 @@ const groupByWinner = (claims: any) =>{
         return accumulator;
     }, {});
 }
+

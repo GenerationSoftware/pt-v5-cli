@@ -13,7 +13,12 @@ import {
 } from "@generationsoftware/pt-v5-utils-js";
 import * as core from "@actions/core";
 
-import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
+import {
+  createStatus,
+  updateStatusFailure,
+  updateStatusSuccess,
+  PrizesByTier,
+} from "../../lib/utils/status.js";
 import { getProvider } from "../../lib/utils/getProvider.js";
 import { createOutputPath } from "../../lib/utils/createOutputPath.js";
 import { createExitCode } from "../../lib/utils/createExitCode.js";
@@ -123,7 +128,11 @@ export default class DrawPrizes extends Command {
 
     // #3. Page through and concat all accounts for all prizeVaults
     this.log(`populateSubgraphPrizeVaultAccounts`);
-    prizeVaults = await populateSubgraphPrizeVaultAccounts(Number(chainId), prizeVaults);
+    prizeVaults = await populateSubgraphPrizeVaultAccounts(
+      Number(chainId),
+      prizeVaults,
+      drawEndTimestamp
+    );
 
     // #4. Determine winners for last draw
     let claims: Claim[] = await getWinnersClaims(
@@ -148,6 +157,8 @@ export default class DrawPrizes extends Command {
     );
     this.log(`${numAccounts} accounts deposited across ${prizeVaults.length} prizeVaults.`);
 
+    const prizesByTier: PrizesByTier = calculatePrizesByTier(claims);
+
     const claimsWithPrizeAmounts = addTierPrizeAmountsToClaims(claims, tierPrizeAmounts);
 
     /* -------------------------------------------------- */
@@ -163,7 +174,7 @@ export default class DrawPrizes extends Command {
       numTiers: prizePoolInfo.numTiers,
       numPrizeIndices: prizePoolInfo.numPrizeIndices,
       numAccounts,
-      numPrizes: claims.length,
+      prizesByTier,
       prizePoolReserve: prizePoolInfo.reserve,
       amountsTotal: sumPrizeAmounts(tierPrizeAmounts),
       tierPrizeAmounts: mapTierPrizeAmountsToString(tierPrizeAmounts),
@@ -270,4 +281,30 @@ const getVaultPortions = async (
   }
 
   return prizeVaultPortions;
+};
+
+const groupByTier = (claims: any): Record<string, Claim[]> => {
+  return claims.reduce(function (accumulator: any, value: any) {
+    accumulator[value.tier] = accumulator[value.tier] || [];
+    accumulator[value.tier].push(value);
+    return accumulator;
+  }, {});
+};
+
+const calculatePrizesByTier = (claimsWithPrizeAmounts: Claim[]): PrizesByTier => {
+  const claimsGroupedByTier: Record<string, Claim[]> = groupByTier(claimsWithPrizeAmounts);
+
+  const prizesByTier: PrizesByTier = {};
+  for (const entry of Object.entries(claimsGroupedByTier)) {
+    const [tierKey, claims] = entry;
+
+    const claimedClaims = claims.filter(({ claimed }) => claimed);
+
+    prizesByTier[tierKey] = {
+      total: claims.length,
+      claimed: claimedClaims.length,
+    };
+  }
+
+  return prizesByTier;
 };

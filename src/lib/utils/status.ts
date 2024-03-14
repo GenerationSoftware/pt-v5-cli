@@ -1,11 +1,15 @@
 import { Status, StatusError } from '../../types.js'
 
+type PrizesByTierKeys = 'total' | 'claimed'
+
+export type PrizesByTier = Record<string, Record<PrizesByTierKeys, number>>;
+
 export interface SuccessStats {
   numVaults: number;
   numTiers: number;
   numPrizeIndices: number;
   numAccounts: number;
-  numPrizes: number;
+  prizesByTier: PrizesByTier;
   prizePoolReserve: string;
   amountsTotal: string;
   tierPrizeAmounts: any;
