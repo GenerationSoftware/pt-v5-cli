@@ -9,6 +9,7 @@ export interface SuccessStats {
   numTiers: number;
   numPrizeIndices: number;
   numAccounts: number;
+  numPrizes: number;
   prizesByTier: PrizesByTier;
   prizePoolReserve: string;
   amountsTotal: string;

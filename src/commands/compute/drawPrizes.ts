@@ -174,6 +174,7 @@ export default class DrawPrizes extends Command {
       numTiers: prizePoolInfo.numTiers,
       numPrizeIndices: prizePoolInfo.numPrizeIndices,
       numAccounts,
+      numPrizes: claims.length,
       prizesByTier,
       prizePoolReserve: prizePoolInfo.reserve,
       amountsTotal: sumPrizeAmounts(tierPrizeAmounts),

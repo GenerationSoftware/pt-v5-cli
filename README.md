@@ -103,6 +103,7 @@ EXAMPLES
     "numTiers": 3,
     "numPrizeIndices": 21,
     "numAccounts": 3830,
+    "numPrizes": 1052,
     "prizesByTier": {
       "0": {
         "count": 2,
