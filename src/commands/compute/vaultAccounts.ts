@@ -129,7 +129,7 @@ export default class VaultAccounts extends Command {
     /* -------------------------------------------------- */
     // Write to Disk
     /* -------------------------------------------------- */
-    writeDepositorsToOutput(outDirWithSchema, prizeVaults);
+    writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, prizeVaults);
 
     console.log(`updateStatusSuccess`);
     const statusSuccess = updateStatusSuccess(VaultAccounts.statusLoading.createdAt, {
@@ -239,13 +239,24 @@ const getVaultPortions = async (
   return prizeVaultPortions;
 };
 
-export function writeDepositorsToOutput(outDir: string, prizeVaults: PrizeVault[]): void {
+export function writeDepositorsToOutput(
+  outDir: string,
+  chainId: string,
+  prizePoolAddress: string,
+  prizeVaults: PrizeVault[]
+): void {
   console.log("Writing depositors to output ...");
 
   for (const prizeVault of Object.values(prizeVaults)) {
-    const accounts = prizeVault.accounts.map((account) => account.user.address);
-    console.log("accounts");
-    console.log(accounts);
-    writeToOutput(outDir, prizeVault.id.toLowerCase(), accounts);
+    const userAddresses = prizeVault.accounts.map((account) => account.user.address);
+
+    const vaultJson = {
+      chainId,
+      prizePoolAddress,
+      vaultAddress: prizeVault.id,
+      userAddresses,
+    };
+
+    writeToOutput(outDir, prizeVault.id.toLowerCase(), vaultJson);
   }
 }

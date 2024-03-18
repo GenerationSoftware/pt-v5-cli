@@ -23,7 +23,6 @@ import {
   sumPrizeAmounts,
   mapTierPrizeAmountsToString,
   addTierPrizeAmountsToClaims,
-  addUserAndTotalSupplyTwabsToClaims,
   TierPrizeAmounts,
 } from "../../lib/utils/prizeAmounts.js";
 
