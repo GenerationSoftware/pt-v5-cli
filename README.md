@@ -36,7 +36,84 @@ USAGE
 
 # Commands
 
-## Compute Draw Prizes
+## Compute Vault Accounts
+
+```sh-session
+ptv5 compute vaultAccounts
+```
+
+Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.
+
+JSON is in the format required by the [@GenerationSoftware/foundry-winner-calc](https://github.com/@GenerationSoftware/foundry-winner-calc) repo to quickly winners.
+
+Simply pass a `chainId`, `prizePool` and `outDir` to compute and locally save the results.
+
+```
+USAGE
+  $ ptv5 compute vaultAccounts --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1'
+
+DESCRIPTION
+  Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.
+
+EXAMPLES
+  $ ptv5 compute vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp
+    Running compute:vaultAccounts on chainId: 1
+```
+
+## Vaults Files ([vaultAddress].json)
+
+```json
+{
+  "chainId": 10,
+  "prizePoolAddress": "0xe32e5E1c5f0c80bD26Def2d0EA5008C107000d6A",
+  "vaultAddress": "0xf0B19f02c63d51B69563A2b675e0160e1C34397C",
+  "userAddresses": [
+    "0x07967251f6db5f9d095119379bd8fc4fce60b3e1",
+    "0x084039db4e3c6775eabfc59cbd3725d3d9a6d752"
+    // ...
+  ]
+}
+```
+
+## Status File (status.json)
+
+```json
+{
+  "status": "LOADING",
+  "createdAt": "11"
+}
+```
+
+### Success
+
+```json
+{
+  "status": "SUCCESS",
+  "createdAt": 1693423691768,
+  "updatedAt": 1693423805132,
+  "runtime": 114,
+  "meta": {
+    "numVaults": 7,
+    "numTiers": 3,
+    "numPrizeIndices": 21,
+    "numAccounts": 3830
+  }
+}
+```
+
+### Failure
+
+```json
+{
+  "status": "FAILURE",
+  "createdAt": "11",
+  "updatedAt": "33",
+  "runtime": "22",
+  "error": "ErrorCode"
+}
+```
+
+## Compute Draw Prizes (deprecated)
 
 ```sh-session
 ptv5 compute drawPrizes
