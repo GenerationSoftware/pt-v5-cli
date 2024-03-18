@@ -254,6 +254,7 @@ export function writeDepositorsToOutput(
       chainId,
       prizePoolAddress,
       vaultAddress: prizeVault.id,
+      multicallBatchSize: 50,
       userAddresses,
     };
 
