@@ -125,8 +125,8 @@ export default class DrawPrizes extends Command {
     this.log(`populateSubgraphPrizeVaultAccounts`);
     prizeVaults = await populateSubgraphPrizeVaultAccounts(
       Number(chainId),
-      prizeVaults
-      // prizePoolInfo.lastDrawClosedAt
+      prizeVaults,
+      prizePoolInfo.lastDrawClosedAt
     );
 
     // #4. Determine winners for last draw
