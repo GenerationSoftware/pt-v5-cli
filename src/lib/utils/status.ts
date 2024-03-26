@@ -1,16 +1,4 @@
-import { Status, StatusError } from '../../types'
-
-export interface SuccessStats {
-  numVaults: number;
-  numTiers: number;
-  numPrizeIndices: number;
-  numAccounts: number;
-  numPrizes: number;
-  prizePoolReserve: string;
-  amountsTotal: string;
-  tierPrizeAmounts: any;
-  vaultPortions: any;
-}
+import { Status, StatusError, DrawPrizesSuccessStats, VaultAccountsSuccessStats } from '../../types'
 
 export function createStatus(): Status {
   return {
@@ -19,7 +7,7 @@ export function createStatus(): Status {
   }
 }
 
-export function updateStatusSuccess(createdAt: number, meta: SuccessStats): Status {
+export function updateStatusSuccess(createdAt: number, meta: DrawPrizesSuccessStats | VaultAccountsSuccessStats): Status {
   const now = Date.now()
   return {
     status: 'SUCCESS',
