@@ -2,6 +2,8 @@ type PrizesByTierKeys = "total" | "claimed";
 
 export type PrizesByTier = Record<string, Record<PrizesByTierKeys, number>>;
 
+export interface ConcatWinnersSuccessStats {}
+
 export interface VaultAccountsSuccessStats {
   numVaults: number;
   numTiers: number;
