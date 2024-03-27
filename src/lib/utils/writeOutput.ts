@@ -21,7 +21,6 @@ export function writeCombinedWinnersToOutput(outDirWithSchema: string, vaults: P
   let winnersJson: Record<string, Winner[]> = {};
   for (const vault of Object.values(vaults)) {
     const fileJson = readFileSync(`${outDirWithSchema}${vault.id.toLowerCase()}.json`, "utf8");
-    console.log(fileJson);
 
     winnersJson[vault.id.toLowerCase()] = JSON.parse(fileJson).winners;
   }

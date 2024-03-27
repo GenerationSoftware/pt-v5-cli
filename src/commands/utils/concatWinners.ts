@@ -115,9 +115,7 @@ const getPrizePoolByAddress = async (
   prizePool: string,
   readProvider: Provider
 ): Promise<Contract> => {
-  console.log(Number(chainId));
   const contracts = await downloadContractsBlob(Number(chainId));
-  console.log(contracts);
 
   const prizePoolContractBlob = contracts.contracts.find(
     (contract: any) =>
