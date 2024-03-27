@@ -2,25 +2,13 @@ import { BigNumber, ethers, Contract } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { Command, Flags } from "@oclif/core";
 import * as core from "@actions/core";
-import {
-  downloadContractsBlob,
-  Vault,
-  PrizePoolInfo,
-  getSubgraphVaults,
-} from "@generationsoftware/pt-v5-utils-js";
+import { downloadContractsBlob, getSubgraphVaults } from "@generationsoftware/pt-v5-utils-js";
 
 import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status";
 import { getProvider } from "../../lib/utils/getProvider";
 import { createOutputPath } from "../../lib/utils/createOutputPath";
 import { createExitCode } from "../../lib/utils/createExitCode";
-import { writeToOutput } from "../../lib/utils/writeOutput";
-
-type PrizeTierIndices = Record<string, number[]>;
-
-type Winner = {
-  user: string;
-  prizes: PrizeTierIndices;
-};
+import { writeToOutput, writeCombinedWinnersToOutput } from "../../lib/utils/writeOutput";
 
 /**
  * @name ConcatWinners
@@ -108,7 +96,7 @@ export default class ConcatWinners extends Command {
     /* -------------------------------------------------- */
     // Write to Disk
     /* -------------------------------------------------- */
-    // writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, vaults);
+    writeCombinedWinnersToOutput(outDirWithSchema, vaults);
 
     console.log(`updateStatusSuccess`);
     const statusSuccess = updateStatusSuccess(ConcatWinners.statusLoading.createdAt, {});
@@ -158,22 +146,4 @@ export function mapBigNumbersToStrings(bigNumbers: Record<string, BigNumber>) {
   }
 
   return obj;
-}
-
-export function writeDepositorsToOutput(
-  outDir: string,
-  chainId: string,
-  prizePoolAddress: string,
-  vaults: Vault[]
-): void {
-  console.log("Writing depositors to output ...");
-
-  let winnersJson: Record<string, Winner[]> = {};
-  for (const vault of Object.values(vaults)) {
-    // const fileJson = readFile();
-
-    winnersJson[vault.id.toLowerCase()] = fileJson.winners;
-  }
-
-  writeToOutput(outDir, "winners.json", winnersJson);
 }

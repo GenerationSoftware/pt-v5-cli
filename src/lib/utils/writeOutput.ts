@@ -1,6 +1,8 @@
-import { Claim } from '@generationsoftware/pt-v5-utils-js'
-import { writeFileSync, mkdirSync} from 'fs'
+import { Claim, Vault } from '@generationsoftware/pt-v5-utils-js'
+import { readFileSync, writeFileSync, mkdirSync} from 'fs'
 type File = any
+
+import { Winner } from '../../types'
 
 export function writePrizesToOutput(
   outDir: string,
@@ -34,4 +36,21 @@ const groupByWinner = (claims: any) =>{
         accumulator[value.winner].push(value);
         return accumulator;
     }, {});
+}
+
+export function writeCombinedWinnersToOutput(
+  outDirWithSchema: string,
+  vaults: Vault[]
+): void {
+  console.log("Writing depositors to output ...");
+
+  let winnersJson: Record<string, Winner[]> = {};
+  for (const vault of Object.values(vaults)) {
+    const fileJson = readFileSync(`${outDirWithSchema}${vault.id.toLowerCase()}.json`, 'utf8');
+    console.log(fileJson);
+
+    winnersJson[vault.id.toLowerCase()] = JSON.parse(fileJson).winners;
+  }
+
+  writeToOutput(outDirWithSchema, "winners", winnersJson);
 }

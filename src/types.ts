@@ -37,3 +37,10 @@ export interface Status {
   meta?: any;
   error?: StatusError;
 }
+
+export type PrizeTierIndices = Record<string, number[]>;
+
+export type Winner = {
+  user: string;
+  prizes: PrizeTierIndices;
+};
