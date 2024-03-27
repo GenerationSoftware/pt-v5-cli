@@ -1,32 +1,25 @@
 import { BigNumber, ethers, Contract } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { Command, Flags } from "@oclif/core";
-import {
-  downloadContractsBlob,
-  getPrizePoolInfo,
-  PrizeVault,
-  PrizePoolInfo,
-  getSubgraphPrizeVaults,
-  populateSubgraphPrizeVaultAccounts,
-} from "@generationsoftware/pt-v5-utils-js";
 import * as core from "@actions/core";
+import { downloadContractsBlob, getSubgraphPrizeVaults } from "@generationsoftware/pt-v5-utils-js";
 
 import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
 import { getProvider } from "../../lib/utils/getProvider.js";
 import { createOutputPath } from "../../lib/utils/createOutputPath.js";
 import { createExitCode } from "../../lib/utils/createExitCode.js";
-import { writeToOutput } from "../../lib/utils/writeOutput.js";
+import { writeToOutput, writeCombinedWinnersToOutput } from "../../lib/utils/writeOutput.js";
 
 /**
- * @name VaultAccounts
+ * @name ConcatWinners
  */
 // @ts-ignore
-export default class VaultAccounts extends Command {
+export default class ConcatWinners extends Command {
   static description =
-    "Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.";
+    "Takes all of foundry-winners-calc output files and ties them into one winners.json file.";
   static examples = [
-    `$ ptv5 compute vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors
-       Running compute:vaultAccounts on chainId: 1 for prizePool: 0x0 using latest drawID
+    `$ ptv5 utils concatWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./vaultAccounts
+       Running utils:concatWinners on chainId: 1 for prizePool: 0x0 using latest drawID
   `,
   ];
 
@@ -51,10 +44,9 @@ export default class VaultAccounts extends Command {
   static args = [];
   static statusLoading = createStatus();
 
-  // TODO: Fix this so it makes sense with new v5:
   public async catch(error: any): Promise<any> {
     console.log(error, "_error vaultAccounts");
-    const { flags } = await this.parse(VaultAccounts);
+    const { flags } = await this.parse(ConcatWinners);
     const { chainId, prizePool, outDir } = flags;
 
     const readProvider = getProvider(chainId);
@@ -63,8 +55,8 @@ export default class VaultAccounts extends Command {
 
     const drawId = await prizePoolContract?.getLastAwardedDrawId();
 
-    this.warn("Failed to fetch depositors (" + error + ")");
-    const statusFailure = updateStatusFailure(VaultAccounts.statusLoading.createdAt, error);
+    this.warn("Failed to concat winner output files (" + error + ")");
+    const statusFailure = updateStatusFailure(ConcatWinners.statusLoading.createdAt, error);
 
     const outDirWithSchema = createOutputPath(outDir, chainId, prizePool.toLowerCase(), drawId);
     writeToOutput(outDirWithSchema, "status", statusFailure);
@@ -74,12 +66,12 @@ export default class VaultAccounts extends Command {
   }
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(VaultAccounts);
+    const { flags } = await this.parse(ConcatWinners);
     const { chainId, prizePool, outDir } = flags;
 
     console.log("");
     console.log(
-      `Running "calculate:vaultAccounts" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
+      `Running "utils:concatWinners" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
     );
 
     const readProvider = getProvider(chainId);
@@ -91,53 +83,23 @@ export default class VaultAccounts extends Command {
     // Create Status File
     /* -------------------------------------------------- */
     const outDirWithSchema = createOutputPath(outDir, chainId, prizePool, drawId);
-    writeToOutput(outDirWithSchema, "status", VaultAccounts.statusLoading);
+    writeToOutput(outDirWithSchema, "concatWinnersStatus", ConcatWinners.statusLoading);
 
-    /* -------------------------------------------------- */
-    // Data Fetching && Compute
-    /* -------------------------------------------------- */
-    const contracts = await downloadContractsBlob(Number(chainId));
-    const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
-
-    // #2. Collect all prizeVaults
+    // #2. Collect all vaults
     console.log();
     console.log(`Getting prize vaults from subgraph ...`);
-    let prizeVaults = await getSubgraphPrizeVaults(Number(chainId));
-    if (prizeVaults.length === 0) {
-      throw new Error("Claimer: No prizeVaults found in subgraph");
+    let vaults = await getSubgraphPrizeVaults(Number(chainId));
+    if (vaults.length === 0) {
+      throw new Error("Claimer: No vaults found in subgraph");
     }
 
-    // #3. Page through and concat all accounts for all prizeVaults
-    console.log();
-    console.log(
-      `Getting depositors for each vault with a non-zero balance in the previous draw from subgraph ...`
-    );
-    prizeVaults = await populateSubgraphPrizeVaultAccounts(
-      Number(chainId),
-      prizeVaults,
-      prizePoolInfo.lastDrawClosedAt
-    );
-
-    const numAccounts = prizeVaults.reduce(
-      (accumulator, vault) => vault.accounts.length + accumulator,
-      0
-    );
-    console.log();
-    console.log(`${numAccounts} accounts deposited across ${prizeVaults.length} prizeVaults.`);
-    console.log();
-    console.log();
     /* -------------------------------------------------- */
     // Write to Disk
     /* -------------------------------------------------- */
-    writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, prizeVaults);
+    writeCombinedWinnersToOutput(outDirWithSchema, vaults);
 
     console.log(`updateStatusSuccess`);
-    const statusSuccess = updateStatusSuccess(VaultAccounts.statusLoading.createdAt, {
-      numVaults: prizeVaults.length,
-      numTiers: prizePoolInfo.numTiers,
-      numPrizeIndices: prizePoolInfo.numPrizeIndices,
-      numAccounts,
-    });
+    const statusSuccess = updateStatusSuccess(ConcatWinners.statusLoading.createdAt, {});
     writeToOutput(outDirWithSchema, "status", statusSuccess);
 
     /* -------------------------------------------------- */
@@ -153,7 +115,9 @@ const getPrizePoolByAddress = async (
   prizePool: string,
   readProvider: Provider
 ): Promise<Contract> => {
+  console.log(Number(chainId));
   const contracts = await downloadContractsBlob(Number(chainId));
+  console.log(contracts);
 
   const prizePoolContractBlob = contracts.contracts.find(
     (contract: any) =>
@@ -184,27 +148,4 @@ export function mapBigNumbersToStrings(bigNumbers: Record<string, BigNumber>) {
   }
 
   return obj;
-}
-
-export function writeDepositorsToOutput(
-  outDir: string,
-  chainId: string,
-  prizePoolAddress: string,
-  prizeVaults: PrizeVault[]
-): void {
-  console.log("Writing depositors to output ...");
-
-  for (const prizeVault of Object.values(prizeVaults)) {
-    const userAddresses = prizeVault.accounts.map((account) => account.user.address);
-
-    const vaultJson = {
-      chainId,
-      prizePoolAddress,
-      vaultAddress: prizeVault.id,
-      multicallBatchSize: 100,
-      userAddresses,
-    };
-
-    writeToOutput(outDir, prizeVault.id.toLowerCase(), vaultJson);
-  }
 }
