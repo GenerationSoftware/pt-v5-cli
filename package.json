@@ -6,7 +6,7 @@
     "url": "https://github.com/generationsoftware"
   },
   "license": "MIT",
-  "version": "1.1.0-beta.11",
+  "version": "1.1.0-beta.12",
   "repository": "https://github.com/generationsoftware/pt-v5-cli",
   "homepage": "https://github.com/generationsoftware/pt-v5-cli",
   "bugs": "https://github.com/generationsoftware/pt-v5-cli/issues",
@@ -36,7 +36,7 @@
     "@ethersproject/bignumber": "^5.5.0",
     "@ethersproject/contracts": "^5.5.0",
     "@ethersproject/providers": "^5.5.3",
-    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.8",
+    "@generationsoftware/pt-v5-utils-js": "1.1.0-beta.10",
     "@oclif/core": "^3",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^4",
