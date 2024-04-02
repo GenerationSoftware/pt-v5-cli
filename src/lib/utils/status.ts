@@ -1,10 +1,4 @@
-import {
-  Status,
-  StatusError,
-  DrawPrizesSuccessStats,
-  VaultAccountsSuccessStats,
-  ConcatWinnersSuccessStats,
-} from "../../types.js";
+import { Status, StatusError, SuccessStats } from "../../types.js";
 
 export function createStatus(): Status {
   return {
@@ -13,10 +7,7 @@ export function createStatus(): Status {
   };
 }
 
-export function updateStatusSuccess(
-  createdAt: number,
-  meta: DrawPrizesSuccessStats | VaultAccountsSuccessStats | ConcatWinnersSuccessStats
-): Status {
+export function updateStatusSuccess(createdAt: number, meta: SuccessStats): Status {
   const now = Date.now();
   return {
     status: "SUCCESS",

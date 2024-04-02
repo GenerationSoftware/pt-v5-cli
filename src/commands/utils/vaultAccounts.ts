@@ -23,10 +23,10 @@ import { writeToOutput } from "../../lib/utils/writeOutput.js";
 // @ts-ignore
 export default class VaultAccounts extends Command {
   static description =
-    "Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.";
+    "Outputs the previous draw's depositors with a non-zero balance for a PrizePool to a JSON file in a target directory.";
   static examples = [
-    `$ ptv5 compute vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors
-       Running compute:vaultAccounts on chainId: 1 for prizePool: 0x0 using latest drawID
+    `$ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors
+       Running utils:vaultAccounts on chainId: 1 for prizePool: 0x0 using latest drawID
   `,
   ];
 
@@ -79,7 +79,7 @@ export default class VaultAccounts extends Command {
 
     console.log("");
     console.log(
-      `Running "calculate:vaultAccounts" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
+      `Running "utils:vaultAccounts" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
     );
 
     const readProvider = getProvider(chainId);
@@ -133,9 +133,6 @@ export default class VaultAccounts extends Command {
 
     console.log(`updateStatusSuccess`);
     const statusSuccess = updateStatusSuccess(VaultAccounts.statusLoading.createdAt, {
-      numVaults: prizeVaults.length,
-      numTiers: prizePoolInfo.numTiers,
-      numPrizeIndices: prizePoolInfo.numPrizeIndices,
       numAccounts,
     });
     writeToOutput(outDirWithSchema, "status", statusSuccess);

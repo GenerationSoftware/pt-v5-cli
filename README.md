@@ -13,7 +13,8 @@ The `@generationsoftware/pt-v5-cli` [node module package](https://www.npmjs.com/
 Primary CLI Commands (help)
 
 ```sh
-npx @generationsoftware/pt-v5-cli help compute drawPrizes
+npx @generationsoftware/pt-v5-cli help utils vaultAccounts
+npx @generationsoftware/pt-v5-cli help utils vaultAccounts
 ```
 
 # ⌨️ CLI Installation
@@ -39,7 +40,7 @@ USAGE
 ## Compute Vault Accounts
 
 ```sh-session
-ptv5 compute vaultAccounts
+ptv5 utils vaultAccounts
 ```
 
 Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.
@@ -50,14 +51,14 @@ Simply pass a `chainId`, `prizePool` and `outDir` to compute and locally save th
 
 ```
 USAGE
-  $ ptv5 compute vaultAccounts --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1'
+  $ ptv5 utils vaultAccounts --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1'
 
 DESCRIPTION
   Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.
 
 EXAMPLES
-  $ ptv5 compute vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp
-    Running compute:vaultAccounts on chainId: 1
+  $ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp
+    Running utils:vaultAccounts on chainId: 1
 ```
 
 ## Vaults Files ([vaultAddress].json)
@@ -113,26 +114,26 @@ EXAMPLES
 }
 ```
 
-## Compute Draw Prizes (deprecated)
+## Concat Winners
 
 ```sh-session
-ptv5 compute drawPrizes
+ptv5 utils concatWinners
 ```
 
-Computes the previous draw's prizes for a PrizePool to a target output directory.
+Receives all of the winners by vault JSON files created by the [foundry-winner-calc](https://github.com/GenerationSoftware/foundry-winner-calc?tab=readme-ov-file) tool and ties them into one winners.json file. Therefore is dependent on `foundry-winner-calc` running prior to concatWinners being run.
 
 Simply pass a `chainId`, `prizePool` and `outDir` to compute and locally save the results.
 
 ```
 USAGE
-  $ ptv5 compute drawPrizes --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1'
+  $ ptv5 utils concatWinners --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1'
 
 DESCRIPTION
-  Computes the previous draw's prizes for a PrizePool to a target output directory.
+  Ingests foundry-winner-calc output files and ties them into one winners.json file.
 
 EXAMPLES
-  $ ptv5 compute drawPrizes --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp
-    Running compute:drawPrizes on chainId: 1
+  $ ptv5 utils concatWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp
+    Running utils:concatWinners on chainId: 1
 ```
 
 ## Prizes File (prizes.json)
@@ -179,38 +180,7 @@ EXAMPLES
     "numVaults": 7,
     "numTiers": 3,
     "numPrizeIndices": 21,
-    "numAccounts": 3830,
-    "numPrizes": 1052,
-    "prizesByTier": {
-      "0": {
-        "count": 2,
-        "claimed": 1
-      },
-      "1": {
-        "count": 50,
-        "claimed": 44
-      },
-      "2": {
-        "count": 1000,
-        "claimed": 300
-      }
-    },
-    "prizePoolReserve": "431450369493570544008",
-    "amountsTotal": "318001330964753848953",
-    "tierPrizeAmounts": {
-      "0": "271304907889060131200",
-      "1": "45062486366179690039",
-      "2": "1633936709514027714"
-    },
-    "vaultPortions": {
-      "0x0410cae69dd01f58224d54881648e35c6cb874fa": "12491920408565",
-      "0x0bfe04201c496a9994b920deb6087a60bdadfbbb": "973235150974337855",
-      "0x4b7a2e1a70ea05523542c9189fa51b133884f321": "232229504251603",
-      "0x9e11c3d53a68c07f6d839e5d89a94052753cedcb": "5916502876505634",
-      "0xb9a647d3391b939cb49b44d3c5e93c63d96ad4a4": "9173734225780914",
-      "0xe2ef926250b0e8a07578d76d9f57e5092340a6fa": "11429890498715426",
-      "0xffb08a9ffc360806be7ef8cf815c1274ef92cea9": "0"
-    }
+    "numAccounts": 3830
   }
 }
 ```
@@ -253,8 +223,8 @@ DESCRIPTION
 
 ### Using the tool in dev
 
-You can test the CLI while developing by using the following, with whichever chain / prizePool flags you want to test with:
+You can test the CLI while developing by using the following, with whichever chain & prizePool flags you want to test with:
 
 ```
-./bin/run.js compute drawPrizes --chainId 80001 -o ./temp -p '0xA32C8f94191c9295634f0034eb2b0e2749e77974'
+./bin/run.js utils vaultAccounts --chainId 80001 -o ./temp -p '0xA32C8f94191c9295634f0034eb2b0e2749e77974'
 ```

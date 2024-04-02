@@ -1,14 +1,23 @@
+import * as core from "@actions/core";
 import { BigNumber, ethers, Contract } from "ethers";
 import { Provider } from "@ethersproject/providers";
 import { Command, Flags } from "@oclif/core";
-import * as core from "@actions/core";
-import { downloadContractsBlob, getSubgraphPrizeVaults } from "@generationsoftware/pt-v5-utils-js";
+import { readFileSync } from "fs";
+import {
+  downloadContractsBlob,
+  getSubgraphPrizeVaults,
+  getPrizePoolInfo,
+  populateSubgraphPrizeVaultAccounts,
+  PrizePoolInfo,
+  PrizeVault,
+} from "@generationsoftware/pt-v5-utils-js";
 
 import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
 import { getProvider } from "../../lib/utils/getProvider.js";
 import { createOutputPath } from "../../lib/utils/createOutputPath.js";
 import { createExitCode } from "../../lib/utils/createExitCode.js";
-import { writeToOutput, writeCombinedWinnersToOutput } from "../../lib/utils/writeOutput.js";
+import { writeToOutput } from "../../lib/utils/writeOutput.js";
+import { Winner } from "../../types.js";
 
 /**
  * @name ConcatWinners
@@ -16,7 +25,7 @@ import { writeToOutput, writeCombinedWinnersToOutput } from "../../lib/utils/wri
 // @ts-ignore
 export default class ConcatWinners extends Command {
   static description =
-    "Takes all of foundry-winners-calc output files and ties them into one winners.json file.";
+    "Ingests foundry-winner-calc output files and ties them into one winners.json file.";
   static examples = [
     `$ ptv5 utils concatWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./vaultAccounts
        Running utils:concatWinners on chainId: 1 for prizePool: 0x0 using latest drawID
@@ -75,7 +84,9 @@ export default class ConcatWinners extends Command {
     );
 
     const readProvider = getProvider(chainId);
+    const contracts = await downloadContractsBlob(Number(chainId));
     const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
+    const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
     const drawId = await prizePoolContract?.getLastAwardedDrawId();
     console.log(`DrawID: #${drawId.toString()}`);
 
@@ -83,23 +94,47 @@ export default class ConcatWinners extends Command {
     // Create Status File
     /* -------------------------------------------------- */
     const outDirWithSchema = createOutputPath(outDir, chainId, prizePool, drawId);
-    writeToOutput(outDirWithSchema, "concatWinnersStatus", ConcatWinners.statusLoading);
+    writeToOutput(outDirWithSchema, "status", ConcatWinners.statusLoading);
 
-    // #2. Collect all vaults
-    console.log();
+    // #2. Collect all prizeVaults
     console.log(`Getting prize vaults from subgraph ...`);
-    let vaults = await getSubgraphPrizeVaults(Number(chainId));
-    if (vaults.length === 0) {
-      throw new Error("Claimer: No vaults found in subgraph");
+    let prizeVaults = await getSubgraphPrizeVaults(Number(chainId));
+    if (prizeVaults.length === 0) {
+      throw new Error("Claimer: No prizeVaults found in subgraph");
     }
+
+    // #3. Page through and concat all accounts for all prizeVaults
+    console.log();
+    console.log(
+      `Getting depositors for each vault with a non-zero balance in the previous draw from subgraph ...`
+    );
+    prizeVaults = await populateSubgraphPrizeVaultAccounts(
+      Number(chainId),
+      prizeVaults,
+      prizePoolInfo.lastDrawClosedAt
+    );
+
+    const numAccounts = prizeVaults.reduce(
+      (accumulator, vault) => vault.accounts.length + accumulator,
+      0
+    );
+    console.log();
+    console.log(`${numAccounts} accounts deposited across ${prizeVaults.length} prizeVaults.`);
+    console.log();
+    console.log();
 
     /* -------------------------------------------------- */
     // Write to Disk
     /* -------------------------------------------------- */
-    writeCombinedWinnersToOutput(outDirWithSchema, vaults);
+    writeCombinedWinnersToOutput(outDirWithSchema, prizeVaults);
 
     console.log(`updateStatusSuccess`);
-    const statusSuccess = updateStatusSuccess(ConcatWinners.statusLoading.createdAt, {});
+    const statusSuccess = updateStatusSuccess(ConcatWinners.statusLoading.createdAt, {
+      numVaults: prizeVaults.length,
+      numTiers: prizePoolInfo.numTiers,
+      numPrizeIndices: prizePoolInfo.numPrizeIndices,
+      numAccounts,
+    });
     writeToOutput(outDirWithSchema, "status", statusSuccess);
 
     /* -------------------------------------------------- */
@@ -146,4 +181,17 @@ export function mapBigNumbersToStrings(bigNumbers: Record<string, BigNumber>) {
   }
 
   return obj;
+}
+
+export function writeCombinedWinnersToOutput(outDirWithSchema: string, vaults: PrizeVault[]): void {
+  console.log("Writing depositors to output ...");
+
+  let winnersJson: Record<string, Winner[]> = {};
+  for (const vault of Object.values(vaults)) {
+    const fileJson = readFileSync(`${outDirWithSchema}${vault.id.toLowerCase()}.json`, "utf8");
+
+    winnersJson[vault.id.toLowerCase()] = JSON.parse(fileJson).winners;
+  }
+
+  writeToOutput(outDirWithSchema, "winners", winnersJson);
 }
