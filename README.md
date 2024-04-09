@@ -8,13 +8,13 @@
 
 ### CLI
 
-The `@generationsoftware/pt-v5-cli` [node module package](https://www.npmjs.com/package/@generationsoftware/pt-v5-cli) is a Node command line interface (CLI) to interact with the **PoolTogether V5 protocol**. The CLI uses the `v5-autotasks-library` modules to fetch and run calculations/computations for essential PoolTogether V5 tasks.
+The `@generationsoftware/pt-v5-cli` [node module package](https://www.npmjs.com/package/@generationsoftware/pt-v5-cli) is a Node command line interface (CLI) to interact with the **PoolTogether V5 protocol**. The CLI uses the `pt-v5-utils-js` package to fetch and run calculations/computations for essential PoolTogether V5 tasks.
 
 Primary CLI Commands (help)
 
 ```sh
 npx @generationsoftware/pt-v5-cli help utils vaultAccounts
-npx @generationsoftware/pt-v5-cli help utils vaultAccounts
+npx @generationsoftware/pt-v5-cli help utils concatWinners
 ```
 
 # ⌨️ CLI Installation
