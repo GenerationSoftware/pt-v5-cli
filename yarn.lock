@@ -1058,10 +1058,10 @@
   resolved "https://registry.npmjs.org/@gar/promisify/-/promisify-1.1.3.tgz"
   integrity sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==
 
-"@generationsoftware/pt-v5-utils-js@^1.1.0-beta.13":
-  version "1.1.0-beta.13"
-  resolved "https://registry.npmjs.org/@generationsoftware/pt-v5-utils-js/-/pt-v5-utils-js-1.1.0-beta.13.tgz"
-  integrity sha512-QDitMpX5NYQT9OTqnOFJeoXNnAQRBco2koVBrLiBMbZ/v4ZVDSiERglooiv5Jq0iuC1ui+LLkd3BaPXYdT/IhA==
+"@generationsoftware/pt-v5-utils-js@^1.1.0-beta.15":
+  version "1.1.0-beta.15"
+  resolved "https://registry.npmjs.org/@generationsoftware/pt-v5-utils-js/-/pt-v5-utils-js-1.1.0-beta.15.tgz"
+  integrity sha512-0pSwjYSp6A/llChP7oB033cAf0S4UybDPJCX1+3DlyUrPHZszAIQGZdm/9uvsE8qNjkYaXitrRuAAJ4F2555Hw==
   dependencies:
     "@ethersproject/abi" "5.7.0"
     "@ethersproject/providers" "5.7.2"
