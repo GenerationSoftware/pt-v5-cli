@@ -6,8 +6,6 @@ import {
   getPrizePoolInfo,
   PrizeVault,
   PrizePoolInfo,
-  getSubgraphPrizeVaults,
-  populateSubgraphPrizeVaultAccounts,
 } from "@generationsoftware/pt-v5-utils-js";
 import * as core from "@actions/core";
 
@@ -15,6 +13,7 @@ import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../li
 import { getProvider } from "../../lib/utils/getProvider.js";
 import { createOutputPath } from "../../lib/utils/createOutputPath.js";
 import { createExitCode } from "../../lib/utils/createExitCode.js";
+import { getAllPrizeVaultsAndAccountsWithBalance } from "../../lib/utils/getAllPrizeVaultsAndAccountsWithBalance.js";
 import { writeToOutput } from "../../lib/utils/writeOutput.js";
 
 /**
@@ -99,33 +98,11 @@ export default class VaultAccounts extends Command {
     const contracts = await downloadContractsBlob(Number(chainId));
     const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
 
-    // #2. Collect all prizeVaults
-    console.log();
-    console.log(`Getting prize vaults from subgraph ...`);
-    let prizeVaults = await getSubgraphPrizeVaults(Number(chainId));
-    if (prizeVaults.length === 0) {
-      throw new Error("Claimer: No prizeVaults found in subgraph");
-    }
-
-    // #3. Page through and concat all accounts for all prizeVaults
-    console.log();
-    console.log(
-      `Getting depositors for each vault with a non-zero balance in the previous draw from subgraph ...`
-    );
-    prizeVaults = await populateSubgraphPrizeVaultAccounts(
+    const { prizeVaults, numAccounts } = await getAllPrizeVaultsAndAccountsWithBalance(
       Number(chainId),
-      prizeVaults,
-      prizePoolInfo.lastDrawClosedAt
+      prizePoolInfo
     );
 
-    const numAccounts = prizeVaults.reduce(
-      (accumulator, vault) => vault.accounts.length + accumulator,
-      0
-    );
-    console.log();
-    console.log(`${numAccounts} accounts deposited across ${prizeVaults.length} prizeVaults.`);
-    console.log();
-    console.log();
     /* -------------------------------------------------- */
     // Write to Disk
     /* -------------------------------------------------- */

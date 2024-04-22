@@ -36,7 +36,7 @@
     "@ethersproject/bignumber": "^5.5.0",
     "@ethersproject/contracts": "^5.5.0",
     "@ethersproject/providers": "^5.5.3",
-    "@generationsoftware/pt-v5-utils-js": "^1.1.0",
+    "@generationsoftware/pt-v5-utils-js": "^1.1.2",
     "@oclif/core": "^3",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^4",

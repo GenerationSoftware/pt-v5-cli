@@ -4,18 +4,17 @@ import { Provider } from "@ethersproject/providers";
 import { Command, Flags } from "@oclif/core";
 import { readFileSync } from "fs";
 import {
-  downloadContractsBlob,
-  getSubgraphPrizeVaults,
-  getPrizePoolInfo,
-  populateSubgraphPrizeVaultAccounts,
   PrizePoolInfo,
   PrizeVault,
+  downloadContractsBlob,
+  getPrizePoolInfo,
 } from "@generationsoftware/pt-v5-utils-js";
 
 import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
 import { getProvider } from "../../lib/utils/getProvider.js";
 import { createOutputPath } from "../../lib/utils/createOutputPath.js";
 import { createExitCode } from "../../lib/utils/createExitCode.js";
+import { getAllPrizeVaultsAndAccountsWithBalance } from "../../lib/utils/getAllPrizeVaultsAndAccountsWithBalance.js";
 import { writeToOutput } from "../../lib/utils/writeOutput.js";
 import { Winner } from "../../types.js";
 
@@ -96,27 +95,9 @@ export default class ConcatWinners extends Command {
     const outDirWithSchema = createOutputPath(outDir, chainId, prizePool, drawId);
     writeToOutput(outDirWithSchema, "status", ConcatWinners.statusLoading);
 
-    // #2. Collect all prizeVaults
-    console.log(`Getting prize vaults from subgraph ...`);
-    let prizeVaults = await getSubgraphPrizeVaults(Number(chainId));
-    if (prizeVaults.length === 0) {
-      throw new Error("Claimer: No prizeVaults found in subgraph");
-    }
-
-    // #3. Page through and concat all accounts for all prizeVaults
-    console.log();
-    console.log(
-      `Getting depositors for each vault with a non-zero balance in the previous draw from subgraph ...`
-    );
-    prizeVaults = await populateSubgraphPrizeVaultAccounts(
+    const { prizeVaults, numAccounts } = await getAllPrizeVaultsAndAccountsWithBalance(
       Number(chainId),
-      prizeVaults,
-      prizePoolInfo.lastDrawClosedAt
-    );
-
-    const numAccounts = prizeVaults.reduce(
-      (accumulator, vault) => vault.accounts.length + accumulator,
-      0
+      prizePoolInfo
     );
     console.log();
     console.log(`${numAccounts} accounts deposited across ${prizeVaults.length} prizeVaults.`);
