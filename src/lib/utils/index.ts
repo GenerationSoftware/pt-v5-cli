@@ -1,6 +1,7 @@
-export { createOutputPath } from './createOutputPath'
-export { updateStatusFailure, updateStatusSuccess, createStatus } from './status'
-export { createExitCode } from './createExitCode'
-export { getProvider } from './getProvider'
-export { writeToOutput, writeStatus } from './writeOutput'
-export * from './prizeAmounts'
+export { createOutputPath } from "./createOutputPath.js";
+export { updateStatusFailure, updateStatusSuccess, createStatus } from "./status.js";
+export { createExitCode } from "./createExitCode.js";
+export { getAllPrizeVaultsAndAccountsWithBalance } from "./getAllPrizeVaultsAndAccountsWithBalance.js";
+export { getProvider } from "./getProvider.js";
+export { writeToOutput, writeStatus } from "./writeOutput.js";
+export * from "./prizeAmounts.js";

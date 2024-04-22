@@ -4,18 +4,17 @@ import { Command, Flags } from "@oclif/core";
 import {
   downloadContractsBlob,
   getPrizePoolInfo,
-  Vault,
+  PrizeVault,
   PrizePoolInfo,
-  getSubgraphVaults,
-  populateSubgraphVaultAccounts,
 } from "@generationsoftware/pt-v5-utils-js";
 import * as core from "@actions/core";
 
-import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status";
-import { getProvider } from "../../lib/utils/getProvider";
-import { createOutputPath } from "../../lib/utils/createOutputPath";
-import { createExitCode } from "../../lib/utils/createExitCode";
-import { writeToOutput } from "../../lib/utils/writeOutput";
+import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
+import { getProvider } from "../../lib/utils/getProvider.js";
+import { createOutputPath } from "../../lib/utils/createOutputPath.js";
+import { createExitCode } from "../../lib/utils/createExitCode.js";
+import { getAllPrizeVaultsAndAccountsWithBalance } from "../../lib/utils/getAllPrizeVaultsAndAccountsWithBalance.js";
+import { writeToOutput } from "../../lib/utils/writeOutput.js";
 
 /**
  * @name VaultAccounts
@@ -23,10 +22,10 @@ import { writeToOutput } from "../../lib/utils/writeOutput";
 // @ts-ignore
 export default class VaultAccounts extends Command {
   static description =
-    "Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.";
+    "Outputs the previous draw's depositors with a non-zero balance for a PrizePool to a JSON file in a target directory.";
   static examples = [
-    `$ ptv5 compute vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors
-       Running compute:vaultAccounts on chainId: 1 for prizePool: 0x0 using latest drawID
+    `$ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors
+       Running utils:vaultAccounts on chainId: 1 for prizePool: 0x0 using latest drawID
   `,
   ];
 
@@ -79,7 +78,7 @@ export default class VaultAccounts extends Command {
 
     console.log("");
     console.log(
-      `Running "calculate:vaultAccounts" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
+      `Running "utils:vaultAccounts" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
     );
 
     const readProvider = getProvider(chainId);
@@ -99,37 +98,18 @@ export default class VaultAccounts extends Command {
     const contracts = await downloadContractsBlob(Number(chainId));
     const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
 
-    // #2. Collect all vaults
-    console.log();
-    console.log(`Getting prize vaults from subgraph ...`);
-    let vaults = await getSubgraphVaults(Number(chainId));
-    if (vaults.length === 0) {
-      throw new Error("Claimer: No vaults found in subgraph");
-    }
-
-    // #3. Page through and concat all accounts for all vaults
-    console.log();
-    console.log(`Getting all depositors for each vault from subgraph ...`);
-    vaults = await populateSubgraphVaultAccounts(Number(chainId), vaults);
-
-    const numAccounts = vaults.reduce(
-      (accumulator, vault) => vault.accounts.length + accumulator,
-      0
+    const { prizeVaults, numAccounts } = await getAllPrizeVaultsAndAccountsWithBalance(
+      Number(chainId),
+      prizePoolInfo
     );
-    console.log();
-    console.log(`${numAccounts} accounts deposited across ${vaults.length} vaults.`);
-    console.log();
-    console.log();
+
     /* -------------------------------------------------- */
     // Write to Disk
     /* -------------------------------------------------- */
-    writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, vaults);
+    writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, prizeVaults);
 
     console.log(`updateStatusSuccess`);
     const statusSuccess = updateStatusSuccess(VaultAccounts.statusLoading.createdAt, {
-      numVaults: vaults.length,
-      numTiers: prizePoolInfo.numTiers,
-      numPrizeIndices: prizePoolInfo.numPrizeIndices,
       numAccounts,
     });
     writeToOutput(outDirWithSchema, "status", statusSuccess);
@@ -169,25 +149,36 @@ const getPrizePoolByAddress = async (
   );
 };
 
+export function mapBigNumbersToStrings(bigNumbers: Record<string, BigNumber>) {
+  const obj: Record<string, string> = {};
+
+  for (const entry of Object.entries(bigNumbers)) {
+    const [key, value] = entry;
+    obj[key] = BigNumber.from(value).toString();
+  }
+
+  return obj;
+}
+
 export function writeDepositorsToOutput(
   outDir: string,
   chainId: string,
   prizePoolAddress: string,
-  vaults: Vault[]
+  prizeVaults: PrizeVault[]
 ): void {
   console.log("Writing depositors to output ...");
 
-  for (const vault of Object.values(vaults)) {
-    const userAddresses = vault.accounts.map((account) => account.user.address);
+  for (const prizeVault of Object.values(prizeVaults)) {
+    const userAddresses = prizeVault.accounts.map((account) => account.user.address);
 
     const vaultJson = {
       chainId,
       prizePoolAddress,
-      vaultAddress: vault.id,
+      vaultAddress: prizeVault.id,
       multicallBatchSize: 100,
       userAddresses,
     };
 
-    writeToOutput(outDir, vault.id.toLowerCase(), vaultJson);
+    writeToOutput(outDir, prizeVault.id.toLowerCase(), vaultJson);
   }
 }
