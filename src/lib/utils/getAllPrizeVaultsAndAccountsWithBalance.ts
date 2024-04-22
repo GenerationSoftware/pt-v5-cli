@@ -29,15 +29,15 @@ export const getAllPrizeVaultsAndAccountsWithBalance = async (
 
   // #4. Get a range of the oldest timestamp we want to start querying at to the current closed draw timestmap
   // for use in scoping depositors when querying the Graph
-  const afterTimestamp = prizePoolInfo.lastDrawClosedAt - maxTierPeriodSeconds;
-  const beforeTimestamp = prizePoolInfo.lastDrawClosedAt;
+  const startTimestamp = prizePoolInfo.lastDrawClosedAt - maxTierPeriodSeconds;
+  const endTimestamp = prizePoolInfo.lastDrawClosedAt;
 
   // #5. Query and populate accounts for each vault
   prizeVaults = await populateSubgraphPrizeVaultAccounts(
     chainId,
     prizeVaults,
-    afterTimestamp,
-    beforeTimestamp
+    startTimestamp,
+    endTimestamp
   );
 
   const numAccounts = prizeVaults.reduce(
