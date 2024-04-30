@@ -8,11 +8,12 @@ const providers: Providers = {
   // mainnets
   1: new JsonRpcProvider(process.env.ETHEREUM_MAINNET_RPC_URL),
   10: new JsonRpcProvider(process.env.OPTIMISM_MAINNET_RPC_URL),
+  8453: new JsonRpcProvider(process.env.BASE_MAINNET_RPC_URL),
+  42161: new JsonRpcProvider(process.env.ARBITRUM_MAINNET_RPC_URL),
   // testnets
-  5: new JsonRpcProvider(process.env.ETHEREUM_GOERLI_RPC_URL),
-  420: new JsonRpcProvider(process.env.OPTIMISM_GOERLI_RPC_URL),
   84532: new JsonRpcProvider(process.env.BASE_SEPOLIA_RPC_URL),
   421614: new JsonRpcProvider(process.env.ARBITRUM_SEPOLIA_RPC_URL),
+  11155111: new JsonRpcProvider(process.env.SEPOLIA_RPC_URL),
   11155420: new JsonRpcProvider(process.env.OPTIMISM_SEPOLIA_RPC_URL),
 };
 
