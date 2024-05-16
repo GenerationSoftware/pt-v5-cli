@@ -1038,10 +1038,10 @@
   resolved "https://registry.npmjs.org/@fastify/busboy/-/busboy-2.1.1.tgz"
   integrity sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==
 
-"@generationsoftware/pt-v5-utils-js@^1.1.10":
-  version "1.1.10"
-  resolved "https://registry.yarnpkg.com/@generationsoftware/pt-v5-utils-js/-/pt-v5-utils-js-1.1.10.tgz#8e5b3d75d14b6b430331b3897fad4f955049673c"
-  integrity sha512-eGH8Ql/xUucvtwamr1uhJE9k+pq7fDTsU1RAKu3rq/DfBGKIgc+nAosiOdWA9gxr2m/M8uEccctRFF/hHGnRHA==
+"@generationsoftware/pt-v5-utils-js@^1.1.11":
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/@generationsoftware/pt-v5-utils-js/-/pt-v5-utils-js-1.1.11.tgz#a719bda101d847d2ab34f7581d2d72ce71ee4cae"
+  integrity sha512-DjuXw6OBpfp/g5NLvcUPci3aYY6PB+I5PdydhiMBdqdsQnsHnVxlkz/SzIx8tQQdxVJaGYChUM4OoZuZcxBs2g==
   dependencies:
     "@ethersproject/abi" "5.7.0"
     "@ethersproject/providers" "5.7.2"
