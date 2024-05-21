@@ -56,7 +56,7 @@ export default class VaultAccounts extends Command {
     const { flags } = await this.parse(VaultAccounts);
     const { chainId, prizePool, outDir } = flags;
 
-    const readProvider = getProvider(chainId);
+    const readProvider = getProvider();
 
     const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
 
@@ -81,7 +81,7 @@ export default class VaultAccounts extends Command {
       `Running "utils:vaultAccounts" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
     );
 
-    const readProvider = getProvider(chainId);
+    const readProvider = getProvider();
     const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
     const drawId = await prizePoolContract?.getLastAwardedDrawId();
     console.log(`DrawID: #${drawId.toString()}`);

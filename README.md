@@ -17,6 +17,30 @@ npx @generationsoftware/pt-v5-cli help utils vaultAccounts
 npx @generationsoftware/pt-v5-cli help utils concatWinners
 ```
 
+### Setup
+
+Set up your environment variables using `dotenv`:
+
+#### ENV
+
+Copy `.envrc.example` and input the env vars needed to run this project:
+
+```sh
+cp .envrc.example .envrc
+```
+
+Once your env variables are setup, load them with:
+
+```sh
+direnv allow
+```
+
+#### LIST OF ENVIRONMENT VARIABLES
+
+```sh
+JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
+```
+
 # ⌨️ CLI Installation
 
 <!-- usage -->

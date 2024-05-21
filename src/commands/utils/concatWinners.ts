@@ -57,7 +57,7 @@ export default class ConcatWinners extends Command {
     const { flags } = await this.parse(ConcatWinners);
     const { chainId, prizePool, outDir } = flags;
 
-    const readProvider = getProvider(chainId);
+    const readProvider = getProvider();
 
     const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
 
@@ -82,7 +82,7 @@ export default class ConcatWinners extends Command {
       `Running "utils:concatWinners" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
     );
 
-    const readProvider = getProvider(chainId);
+    const readProvider = getProvider();
     const contracts = await downloadContractsBlob(Number(chainId));
     const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
     const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
