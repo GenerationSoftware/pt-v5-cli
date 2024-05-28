@@ -71,17 +71,17 @@ Computes the previous draw's depositors with a non-zero balance for a PrizePool 
 
 JSON is in the format required by the [@GenerationSoftware/foundry-winner-calc](https://github.com/@GenerationSoftware/foundry-winner-calc) repo to quickly winners.
 
-Simply pass a `chainId`, `prizePool` and `outDir` to compute and locally save the results.
+Pass the `chainId`, `prizePool`, `outDir`, `contractJsonUrl` and `subgraphUrl` to compute and locally save the results.
 
 ```
 USAGE
-  $ ptv5 utils vaultAccounts --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1'
+  $ ptv5 utils vaultAccounts --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1' --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
 
 DESCRIPTION
   Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.
 
 EXAMPLES
-  $ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp
+  $ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
     Running utils:vaultAccounts on chainId: 1
 ```
 
@@ -146,17 +146,17 @@ ptv5 utils concatWinners
 
 Receives all of the winners by vault JSON files created by the [foundry-winner-calc](https://github.com/GenerationSoftware/foundry-winner-calc?tab=readme-ov-file) tool and ties them into one winners.json file. Therefore is dependent on `foundry-winner-calc` running prior to concatWinners being run.
 
-Simply pass a `chainId`, `prizePool` and `outDir` to compute and locally save the results.
+Pass the `chainId`, `prizePool`, `outDir`, `contractJsonUrl` and `subgraphUrl` to compute and locally save the results.
 
 ```
 USAGE
-  $ ptv5 utils concatWinners --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1'
+  $ ptv5 utils concatWinners --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1' --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
 
 DESCRIPTION
   Ingests foundry-winner-calc output files and ties them into one winners.json file.
 
 EXAMPLES
-  $ ptv5 utils concatWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp
+  $ ptv5 utils concatWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
     Running utils:concatWinners on chainId: 1
 ```
 

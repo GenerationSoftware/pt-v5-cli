@@ -24,7 +24,7 @@ export default class VaultAccounts extends Command {
   static description =
     "Outputs the previous draw's depositors with a non-zero balance for a PrizePool to a JSON file in a target directory.";
   static examples = [
-    `$ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors
+    `$ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
        Running utils:vaultAccounts on chainId: 1 for prizePool: 0x0 using latest drawID
   `,
   ];
@@ -45,6 +45,16 @@ export default class VaultAccounts extends Command {
       description: "Output Directory",
       required: true,
     }),
+    contractJsonUrl: Flags.string({
+      char: "j",
+      description: "JSON URL of Contracts",
+      required: true,
+    }),
+    subgraphUrl: Flags.string({
+      char: "s",
+      description: "URL of the Subgraph API",
+      required: true,
+    }),
   };
 
   static args = [];
@@ -54,11 +64,16 @@ export default class VaultAccounts extends Command {
   public async catch(error: any): Promise<any> {
     console.log(error, "_error vaultAccounts");
     const { flags } = await this.parse(VaultAccounts);
-    const { chainId, prizePool, outDir } = flags;
+    const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
 
     const readProvider = getProvider();
 
-    const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
+    const prizePoolContract = await getPrizePoolByAddress(
+      Number(chainId),
+      contractJsonUrl,
+      prizePool,
+      readProvider
+    );
 
     const drawId = await prizePoolContract?.getLastAwardedDrawId();
 
@@ -74,17 +89,27 @@ export default class VaultAccounts extends Command {
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(VaultAccounts);
-    const { chainId, prizePool, outDir } = flags;
+    const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
 
     console.log("");
-    console.log(
-      `Running "utils:vaultAccounts" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
-    );
+    console.log(`Running "utils:vaultAccounts"`);
+    console.log("");
 
     const readProvider = getProvider();
-    const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
+    const prizePoolContract = await getPrizePoolByAddress(
+      Number(chainId),
+      contractJsonUrl,
+      prizePool,
+      readProvider
+    );
     const drawId = await prizePoolContract?.getLastAwardedDrawId();
-    console.log(`DrawID: #${drawId.toString()}`);
+
+    console.log(`chainId:          ${chainId}`);
+    console.log(`prizePool:        ${prizePool.toLowerCase()}`);
+    console.log(`drawId:           #${drawId.toString()}`);
+    console.log(`contractJsonUrl:  ${contractJsonUrl}`);
+    console.log(`subgraphUrl:      ${subgraphUrl}`);
+    console.log(`outDir:           ${outDir}`);
 
     /* -------------------------------------------------- */
     // Create Status File
@@ -95,11 +120,11 @@ export default class VaultAccounts extends Command {
     /* -------------------------------------------------- */
     // Data Fetching && Compute
     /* -------------------------------------------------- */
-    const contracts = await downloadContractsBlob(Number(chainId));
+    const contracts = await downloadContractsBlob(contractJsonUrl);
     const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
 
     const { prizeVaults, numAccounts } = await getAllPrizeVaultsAndAccountsWithBalance(
-      Number(chainId),
+      subgraphUrl,
       prizePoolInfo
     );
 
@@ -108,7 +133,6 @@ export default class VaultAccounts extends Command {
     /* -------------------------------------------------- */
     writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, prizeVaults);
 
-    console.log(`updateStatusSuccess`);
     const statusSuccess = updateStatusSuccess(VaultAccounts.statusLoading.createdAt, {
       numAccounts,
     });
@@ -124,10 +148,11 @@ export default class VaultAccounts extends Command {
 
 const getPrizePoolByAddress = async (
   chainId: number,
+  contractJsonUrl: string,
   prizePool: string,
   readProvider: Provider
 ): Promise<Contract> => {
-  const contracts = await downloadContractsBlob(Number(chainId));
+  const contracts = await downloadContractsBlob(contractJsonUrl);
 
   const prizePoolContractBlob = contracts.contracts.find(
     (contract: any) =>

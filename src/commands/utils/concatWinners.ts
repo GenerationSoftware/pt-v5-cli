@@ -26,7 +26,7 @@ export default class ConcatWinners extends Command {
   static description =
     "Ingests foundry-winner-calc output files and ties them into one winners.json file.";
   static examples = [
-    `$ ptv5 utils concatWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./vaultAccounts
+    `$ ptv5 utils concatWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./vaultAccounts --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
        Running utils:concatWinners on chainId: 1 for prizePool: 0x0 using latest drawID
   `,
   ];
@@ -47,6 +47,16 @@ export default class ConcatWinners extends Command {
       description: "Output Directory",
       required: true,
     }),
+    contractJsonUrl: Flags.string({
+      char: "j",
+      description: "JSON URL of Contracts",
+      required: true,
+    }),
+    subgraphUrl: Flags.string({
+      char: "s",
+      description: "URL of the Subgraph API",
+      required: true,
+    }),
   };
 
   static args = [];
@@ -55,11 +65,16 @@ export default class ConcatWinners extends Command {
   public async catch(error: any): Promise<any> {
     console.log(error, "_error vaultAccounts");
     const { flags } = await this.parse(ConcatWinners);
-    const { chainId, prizePool, outDir } = flags;
+    const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
 
     const readProvider = getProvider();
 
-    const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
+    const prizePoolContract = await getPrizePoolByAddress(
+      Number(chainId),
+      contractJsonUrl,
+      prizePool,
+      readProvider
+    );
 
     const drawId = await prizePoolContract?.getLastAwardedDrawId();
 
@@ -75,19 +90,29 @@ export default class ConcatWinners extends Command {
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(ConcatWinners);
-    const { chainId, prizePool, outDir } = flags;
+    const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
 
     console.log("");
-    console.log(
-      `Running "utils:concatWinners" on chainId: ${chainId} for prizePool: ${prizePool.toLowerCase()} using latest drawID`
-    );
+    console.log(`Running "utils:concatWinners"`);
+    console.log("");
 
     const readProvider = getProvider();
-    const contracts = await downloadContractsBlob(Number(chainId));
-    const prizePoolContract = await getPrizePoolByAddress(Number(chainId), prizePool, readProvider);
+    const contracts = await downloadContractsBlob(contractJsonUrl);
+    const prizePoolContract = await getPrizePoolByAddress(
+      Number(chainId),
+      contractJsonUrl,
+      prizePool,
+      readProvider
+    );
     const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
     const drawId = await prizePoolContract?.getLastAwardedDrawId();
-    console.log(`DrawID: #${drawId.toString()}`);
+
+    console.log(`chainId:          ${chainId}`);
+    console.log(`prizePool:        ${prizePool.toLowerCase()}`);
+    console.log(`drawId:           #${drawId.toString()}`);
+    console.log(`contractJsonUrl:  ${contractJsonUrl}`);
+    console.log(`subgraphUrl:      ${subgraphUrl}`);
+    console.log(`outDir:           ${outDir}`);
 
     /* -------------------------------------------------- */
     // Create Status File
@@ -96,7 +121,7 @@ export default class ConcatWinners extends Command {
     writeToOutput(outDirWithSchema, "status", ConcatWinners.statusLoading);
 
     const { prizeVaults, numAccounts } = await getAllPrizeVaultsAndAccountsWithBalance(
-      Number(chainId),
+      subgraphUrl,
       prizePoolInfo
     );
     console.log();
@@ -109,7 +134,6 @@ export default class ConcatWinners extends Command {
     /* -------------------------------------------------- */
     writeCombinedWinnersToOutput(outDirWithSchema, prizeVaults);
 
-    console.log(`updateStatusSuccess`);
     const statusSuccess = updateStatusSuccess(ConcatWinners.statusLoading.createdAt, {
       numVaults: prizeVaults.length,
       numTiers: prizePoolInfo.numTiers,
@@ -128,10 +152,11 @@ export default class ConcatWinners extends Command {
 
 const getPrizePoolByAddress = async (
   chainId: number,
+  contractJsonUrl: string,
   prizePool: string,
   readProvider: Provider
 ): Promise<Contract> => {
-  const contracts = await downloadContractsBlob(Number(chainId));
+  const contracts = await downloadContractsBlob(contractJsonUrl);
 
   const prizePoolContractBlob = contracts.contracts.find(
     (contract: any) =>
@@ -165,7 +190,7 @@ export function mapBigNumbersToStrings(bigNumbers: Record<string, BigNumber>) {
 }
 
 export function writeCombinedWinnersToOutput(outDirWithSchema: string, vaults: PrizeVault[]): void {
-  console.log("Writing depositors to output ...");
+  console.log("Writing combined winners to output ...");
 
   let winnersJson: Record<string, Winner[]> = {};
   for (const vault of Object.values(vaults)) {

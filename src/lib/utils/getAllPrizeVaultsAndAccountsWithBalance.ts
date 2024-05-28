@@ -6,13 +6,13 @@ import {
 } from "@generationsoftware/pt-v5-utils-js";
 
 export const getAllPrizeVaultsAndAccountsWithBalance = async (
-  chainId: number,
+  subgraphUrl: string,
   prizePoolInfo: PrizePoolInfo
 ): Promise<{ prizeVaults: PrizeVault[]; numAccounts: number }> => {
   // #1. Collect all prizeVaults
   console.log();
   console.log(`Getting prize vaults from subgraph ...`);
-  let prizeVaults = await getSubgraphPrizeVaults(chainId);
+  let prizeVaults = await getSubgraphPrizeVaults(subgraphUrl);
   if (prizeVaults.length === 0) {
     throw new Error("Claimer: No prizeVaults found in subgraph");
   }
@@ -34,7 +34,7 @@ export const getAllPrizeVaultsAndAccountsWithBalance = async (
 
   // #5. Query and populate accounts for each vault
   prizeVaults = await populateSubgraphPrizeVaultAccounts(
-    chainId,
+    subgraphUrl,
     prizeVaults,
     startTimestamp,
     endTimestamp
