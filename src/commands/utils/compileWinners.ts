@@ -1,12 +1,12 @@
-import { ethers, Contract } from "ethers";
-import { Provider } from "@ethersproject/providers";
 import { Command, Flags } from "@oclif/core";
+import { readFileSync } from "fs";
 import {
   downloadContractsBlob,
   getPrizePoolInfo,
   PrizeVault,
   PrizePoolInfo,
 } from "@generationsoftware/pt-v5-utils-js";
+import { computeWinners } from "@generationsoftware/tevm-winner-calc";
 import * as core from "@actions/core";
 
 import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
@@ -16,17 +16,18 @@ import { createExitCode } from "../../lib/utils/createExitCode.js";
 import { getAllPrizeVaultsAndAccountsWithBalance } from "../../lib/utils/getAllPrizeVaultsAndAccountsWithBalance.js";
 import { getPrizePoolByAddress } from "../../lib/utils/getPrizePoolByAddress.js";
 import { writeToOutput } from "../../lib/utils/writeOutput.js";
+import { Winner } from "../../types.js";
 
 /**
- * @name VaultAccounts
+ * @name CompileWinners
  */
 // @ts-ignore
-export default class VaultAccounts extends Command {
+export default class CompileWinners extends Command {
   static description =
-    "Outputs the previous draw's depositors with a non-zero balance for a PrizePool to a JSON file in a target directory.";
+    "Uses tevm-winner-calc to find winners and their corresponding prize indices for the previous draw's, outputs JSON file in a target directory.";
   static examples = [
-    `$ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
-       Running utils:vaultAccounts on chainId: 1 for prizePool: 0x0 using latest drawID
+    `$ ptv5 utils compileWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
+       Running utils:compileWinners on chainId: 1 for prizePool: 0x0 using latest drawID
   `,
   ];
 
@@ -63,8 +64,8 @@ export default class VaultAccounts extends Command {
 
   // TODO: Fix this so it makes sense with new v5:
   public async catch(error: any): Promise<any> {
-    console.log(error, "_error vaultAccounts");
-    const { flags } = await this.parse(VaultAccounts);
+    console.log(error, "_error compileWinners");
+    const { flags } = await this.parse(CompileWinners);
     const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
 
     const readProvider = getProvider();
@@ -79,7 +80,7 @@ export default class VaultAccounts extends Command {
     const drawId = await prizePoolContract?.getLastAwardedDrawId();
 
     this.warn("Failed to fetch depositors (" + error + ")");
-    const statusFailure = updateStatusFailure(VaultAccounts.statusLoading.createdAt, error);
+    const statusFailure = updateStatusFailure(CompileWinners.statusLoading.createdAt, error);
 
     const outDirWithSchema = createOutputPath(outDir, chainId, prizePool.toLowerCase(), drawId);
     writeToOutput(outDirWithSchema, "status", statusFailure);
@@ -89,11 +90,11 @@ export default class VaultAccounts extends Command {
   }
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(VaultAccounts);
+    const { flags } = await this.parse(CompileWinners);
     const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
 
     console.log("");
-    console.log(`Running "utils:vaultAccounts"`);
+    console.log(`Running "utils:compileWinners"`);
     console.log("");
 
     const readProvider = getProvider();
@@ -116,7 +117,7 @@ export default class VaultAccounts extends Command {
     // Create Status File
     /* -------------------------------------------------- */
     const outDirWithSchema = createOutputPath(outDir, chainId, prizePool, drawId);
-    writeToOutput(outDirWithSchema, "status", VaultAccounts.statusLoading);
+    writeToOutput(outDirWithSchema, "status", CompileWinners.statusLoading);
 
     /* -------------------------------------------------- */
     // Data Fetching && Compute
@@ -124,7 +125,7 @@ export default class VaultAccounts extends Command {
     const contracts = await downloadContractsBlob(contractJsonUrl);
     const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
 
-    const { prizeVaults, numAccounts } = await getAllPrizeVaultsAndAccountsWithBalance(
+    const { prizeVaults } = await getAllPrizeVaultsAndAccountsWithBalance(
       subgraphUrl,
       prizePoolInfo
     );
@@ -132,12 +133,7 @@ export default class VaultAccounts extends Command {
     /* -------------------------------------------------- */
     // Write to Disk
     /* -------------------------------------------------- */
-    writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, prizeVaults);
-
-    const statusSuccess = updateStatusSuccess(VaultAccounts.statusLoading.createdAt, {
-      numAccounts,
-    });
-    writeToOutput(outDirWithSchema, "status", statusSuccess);
+    await writeWinnersToOutput(outDirWithSchema, Number(chainId), prizePool, prizeVaults);
 
     /* -------------------------------------------------- */
     // GitHub Actions Output
@@ -147,25 +143,33 @@ export default class VaultAccounts extends Command {
   }
 }
 
-export function writeDepositorsToOutput(
-  outDir: string,
-  chainId: string,
-  prizePoolAddress: string,
-  prizeVaults: PrizeVault[]
-): void {
-  console.log("Writing depositors to output ...");
+export async function writeWinnersToOutput(
+  outDirWithSchema: string,
+  chainId: number,
+  prizePool: string,
+  vaults: PrizeVault[]
+): Promise<void> {
+  console.log("Writing winners to output ...");
 
-  for (const prizeVault of Object.values(prizeVaults)) {
-    const userAddresses = prizeVault.accounts.map((account) => account.user.address);
+  let winnersJson: Record<string, Winner[]> = {};
+  for (const vault of Object.values(vaults)) {
+    const vaultId = vault.id.toLowerCase();
+    const fileJson = readFileSync(`${outDirWithSchema}${vaultId}.json`, "utf8");
 
-    const vaultJson = {
+    const userAddresses = JSON.parse(fileJson).userAddresses;
+
+    const winners = await computeWinners({
       chainId,
-      prizePoolAddress,
-      vaultAddress: prizeVault.id,
-      multicallBatchSize: 1024,
+      rpcUrl: process.env.RPC_URL as string,
+      prizePoolAddress: `0x${prizePool.replace(/^0x/, "")}`,
+      vaultAddress: `0x${vaultId.replace(/^0x/, "")}`,
       userAddresses,
-    };
+      multicallBatchSize: 2048,
+    });
+    console.log(winnersJson);
 
-    writeToOutput(outDir, prizeVault.id.toLowerCase(), vaultJson);
+    winnersJson[vault.id.toLowerCase()] = winners;
+
+    writeToOutput(`${outDirWithSchema}${vaultId}.json`, "winners", winnersJson);
   }
 }

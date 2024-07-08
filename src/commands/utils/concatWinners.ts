@@ -1,6 +1,4 @@
 import * as core from "@actions/core";
-import { BigNumber, ethers, Contract } from "ethers";
-import { Provider } from "@ethersproject/providers";
 import { Command, Flags } from "@oclif/core";
 import { readFileSync } from "fs";
 import {
@@ -15,6 +13,7 @@ import { getProvider } from "../../lib/utils/getProvider.js";
 import { createOutputPath } from "../../lib/utils/createOutputPath.js";
 import { createExitCode } from "../../lib/utils/createExitCode.js";
 import { getAllPrizeVaultsAndAccountsWithBalance } from "../../lib/utils/getAllPrizeVaultsAndAccountsWithBalance.js";
+import { getPrizePoolByAddress } from "../../lib/utils/getPrizePoolByAddress.js";
 import { writeToOutput } from "../../lib/utils/writeOutput.js";
 import { Winner } from "../../types.js";
 
@@ -63,7 +62,7 @@ export default class ConcatWinners extends Command {
   static statusLoading = createStatus();
 
   public async catch(error: any): Promise<any> {
-    console.log(error, "_error vaultAccounts");
+    console.log(error, "_error concatWinners");
     const { flags } = await this.parse(ConcatWinners);
     const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
 
@@ -148,45 +147,6 @@ export default class ConcatWinners extends Command {
     core.setOutput("runStatus", "true");
     core.setOutput("drawId", drawId.toString());
   }
-}
-
-const getPrizePoolByAddress = async (
-  chainId: number,
-  contractJsonUrl: string,
-  prizePool: string,
-  readProvider: Provider
-): Promise<Contract> => {
-  const contracts = await downloadContractsBlob(contractJsonUrl);
-
-  const prizePoolContractBlob = contracts.contracts.find(
-    (contract: any) =>
-      contract.chainId === Number(chainId) &&
-      contract.type === "PrizePool" &&
-      contract.address.toLowerCase() === prizePool.toLowerCase()
-  );
-
-  if (!prizePoolContractBlob) {
-    throw new Error(
-      `Multiple Contracts Unavailable: ${prizePool} on chainId: ${chainId} not found.`
-    );
-  }
-
-  return new ethers.Contract(
-    prizePoolContractBlob?.address,
-    prizePoolContractBlob?.abi,
-    readProvider
-  );
-};
-
-export function mapBigNumbersToStrings(bigNumbers: Record<string, BigNumber>) {
-  const obj: Record<string, string> = {};
-
-  for (const entry of Object.entries(bigNumbers)) {
-    const [key, value] = entry;
-    obj[key] = BigNumber.from(value).toString();
-  }
-
-  return obj;
 }
 
 export function writeCombinedWinnersToOutput(outDirWithSchema: string, vaults: PrizeVault[]): void {
