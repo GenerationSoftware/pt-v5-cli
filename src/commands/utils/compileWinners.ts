@@ -149,7 +149,8 @@ export async function writeWinnersToOutput(
   prizePool: string,
   vaults: PrizeVault[]
 ): Promise<void> {
-  console.log("Writing winners to output ...");
+  console.log("# Writing winners to output ...");
+  console.log("");
 
   let winnersJson: Record<string, Winner[]> = {};
   for (const vault of Object.values(vaults)) {
@@ -164,12 +165,12 @@ export async function writeWinnersToOutput(
       prizePoolAddress: `0x${prizePool.replace(/^0x/, "")}`,
       vaultAddress: `0x${vaultId.replace(/^0x/, "")}`,
       userAddresses,
-      multicallBatchSize: 2048,
+      multicallBatchSize: 1024,
     });
-    console.log(winnersJson);
 
-    winnersJson[vault.id.toLowerCase()] = winners;
+    winnersJson["winners"] = winners;
 
-    writeToOutput(`${outDirWithSchema}${vaultId}.json`, "winners", winnersJson);
+    console.log(`Writing ${outDirWithSchema}${vaultId}-winners.json`);
+    writeToOutput(outDirWithSchema, `${vaultId}-winners`, winnersJson);
   }
 }
