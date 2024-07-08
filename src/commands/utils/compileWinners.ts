@@ -188,7 +188,6 @@ export async function writeDepositorsToOutput(
       chainId,
       prizePoolAddress,
       vaultAddress: prizeVault.id,
-      multicallBatchSize: 1024,
       userAddresses,
       winners,
     };
