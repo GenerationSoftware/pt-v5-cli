@@ -1,5 +1,4 @@
-import { ethers, Contract } from "ethers";
-import { Provider } from "@ethersproject/providers";
+import { readFileSync } from "fs";
 import { Command, Flags } from "@oclif/core";
 import {
   downloadContractsBlob,
@@ -8,6 +7,7 @@ import {
   PrizePoolInfo,
 } from "@generationsoftware/pt-v5-utils-js";
 import * as core from "@actions/core";
+import { computeWinners } from "@generationsoftware/tevm-winner-calc";
 
 import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
 import { getProvider } from "../../lib/utils/getProvider.js";
@@ -16,12 +16,13 @@ import { createExitCode } from "../../lib/utils/createExitCode.js";
 import { getAllPrizeVaultsAndAccountsWithBalance } from "../../lib/utils/getAllPrizeVaultsAndAccountsWithBalance.js";
 import { getPrizePoolByAddress } from "../../lib/utils/getPrizePoolByAddress.js";
 import { writeToOutput } from "../../lib/utils/writeOutput.js";
+import { Winner } from "../../types.js";
 
 /**
- * @name VaultAccounts
+ * @name CompileWinners
  */
 // @ts-ignore
-export default class VaultAccounts extends Command {
+export default class CompileWinners extends Command {
   static description =
     "Outputs the previous draw's depositors with a non-zero balance for a PrizePool to a JSON file in a target directory.";
   static examples = [
@@ -130,11 +131,27 @@ export default class VaultAccounts extends Command {
     );
 
     /* -------------------------------------------------- */
+    // Write Depositors to Disk
+    /* -------------------------------------------------- */
+    await writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, prizeVaults);
+
+    /* -------------------------------------------------- */
+    // Write Winners to Disk
+    /* -------------------------------------------------- */
+    await writeWinnersToOutput(outDirWithSchema, Number(chainId), prizePool, prizeVaults);
+
+    /* -------------------------------------------------- */
     // Write to Disk
     /* -------------------------------------------------- */
-    writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, prizeVaults);
+    await writeCombinedWinnersToOutput(outDirWithSchema, prizeVaults);
 
-    const statusSuccess = updateStatusSuccess(VaultAccounts.statusLoading.createdAt, {
+    /* -------------------------------------------------- */
+    // Write Status to Disk
+    /* -------------------------------------------------- */
+    const statusSuccess = updateStatusSuccess(CompileWinners.statusLoading.createdAt, {
+      numVaults: prizeVaults.length,
+      numTiers: prizePoolInfo.numTiers,
+      numPrizeIndices: prizePoolInfo.numPrizeIndices,
       numAccounts,
     });
     writeToOutput(outDirWithSchema, "status", statusSuccess);
@@ -168,4 +185,49 @@ export function writeDepositorsToOutput(
 
     writeToOutput(outDir, prizeVault.id.toLowerCase(), vaultJson);
   }
+}
+
+export async function writeWinnersToOutput(
+  outDirWithSchema: string,
+  chainId: number,
+  prizePool: string,
+  vaults: PrizeVault[]
+): Promise<void> {
+  console.log("# Writing winners to output ...");
+  console.log("");
+
+  let winnersJson: Record<string, Winner[]> = {};
+  for (const vault of Object.values(vaults)) {
+    const vaultId = vault.id.toLowerCase();
+    const fileJson = readFileSync(`${outDirWithSchema}${vaultId}.json`, "utf8");
+
+    const userAddresses = JSON.parse(fileJson).userAddresses;
+
+    const winners = await computeWinners({
+      chainId,
+      rpcUrl: process.env.RPC_URL as string,
+      prizePoolAddress: `0x${prizePool.replace(/^0x/, "")}`,
+      vaultAddress: `0x${vaultId.replace(/^0x/, "")}`,
+      userAddresses,
+      multicallBatchSize: 1024,
+    });
+
+    winnersJson["winners"] = winners;
+
+    console.log(`Writing ${outDirWithSchema}${vaultId}-winners.json`);
+    writeToOutput(outDirWithSchema, `${vaultId}-winners`, winnersJson);
+  }
+}
+
+export function writeCombinedWinnersToOutput(outDirWithSchema: string, vaults: PrizeVault[]): void {
+  console.log("Writing combined winners to output ...");
+
+  let winnersJson: Record<string, Winner[]> = {};
+  for (const vault of Object.values(vaults)) {
+    const fileJson = readFileSync(`${outDirWithSchema}${vault.id.toLowerCase()}.json`, "utf8");
+
+    winnersJson[vault.id.toLowerCase()] = JSON.parse(fileJson).winners;
+  }
+
+  writeToOutput(outDirWithSchema, "winners", winnersJson);
 }

@@ -4,9 +4,9 @@ export type PrizesByTier = Record<string, Record<PrizesByTierKeys, number>>;
 
 export interface SuccessStats {
   numAccounts: number;
-  numVaults?: number;
-  numTiers?: number;
-  numPrizeIndices?: number;
+  numVaults: number;
+  numTiers: number;
+  numPrizeIndices: number;
 }
 
 export type StatusError = {
