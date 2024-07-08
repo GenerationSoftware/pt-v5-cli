@@ -8,6 +8,7 @@ import {
 } from "@generationsoftware/pt-v5-utils-js";
 import * as core from "@actions/core";
 import { computeWinners } from "@generationsoftware/tevm-winner-calc";
+import { Address } from "viem";
 
 import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
 import { getProvider } from "../../lib/utils/getProvider.js";
@@ -26,8 +27,8 @@ export default class CompileWinners extends Command {
   static description =
     "Outputs the previous draw's depositors with a non-zero balance for a PrizePool to a JSON file in a target directory.";
   static examples = [
-    `$ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
-       Running utils:vaultAccounts on chainId: 1 for prizePool: 0x0 using latest drawID
+    `$ ptv5 utils compileWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
+       Running utils:compileWinners on chainId: 1 for prizePool: 0x0 using latest drawID
   `,
   ];
 
@@ -64,8 +65,8 @@ export default class CompileWinners extends Command {
 
   // TODO: Fix this so it makes sense with new v5:
   public async catch(error: any): Promise<any> {
-    console.log(error, "_error vaultAccounts");
-    const { flags } = await this.parse(VaultAccounts);
+    console.log(error, "_error compileWinners");
+    const { flags } = await this.parse(CompileWinners);
     const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
 
     const readProvider = getProvider();
@@ -80,7 +81,7 @@ export default class CompileWinners extends Command {
     const drawId = await prizePoolContract?.getLastAwardedDrawId();
 
     this.warn("Failed to fetch depositors (" + error + ")");
-    const statusFailure = updateStatusFailure(VaultAccounts.statusLoading.createdAt, error);
+    const statusFailure = updateStatusFailure(CompileWinners.statusLoading.createdAt, error);
 
     const outDirWithSchema = createOutputPath(outDir, chainId, prizePool.toLowerCase(), drawId);
     writeToOutput(outDirWithSchema, "status", statusFailure);
@@ -90,11 +91,11 @@ export default class CompileWinners extends Command {
   }
 
   public async run(): Promise<void> {
-    const { flags } = await this.parse(VaultAccounts);
+    const { flags } = await this.parse(CompileWinners);
     const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
 
     console.log("");
-    console.log(`Running "utils:vaultAccounts"`);
+    console.log(`Running "utils:compileWinners"`);
     console.log("");
 
     const readProvider = getProvider();
@@ -117,7 +118,7 @@ export default class CompileWinners extends Command {
     // Create Status File
     /* -------------------------------------------------- */
     const outDirWithSchema = createOutputPath(outDir, chainId, prizePool, drawId);
-    writeToOutput(outDirWithSchema, "status", VaultAccounts.statusLoading);
+    writeToOutput(outDirWithSchema, "status", CompileWinners.statusLoading);
 
     /* -------------------------------------------------- */
     // Data Fetching && Compute
@@ -131,18 +132,9 @@ export default class CompileWinners extends Command {
     );
 
     /* -------------------------------------------------- */
-    // Write Depositors to Disk
+    // Write Depositors & Winners to Disk
     /* -------------------------------------------------- */
-    await writeDepositorsToOutput(outDirWithSchema, chainId, prizePool, prizeVaults);
-
-    /* -------------------------------------------------- */
-    // Write Winners to Disk
-    /* -------------------------------------------------- */
-    await writeWinnersToOutput(outDirWithSchema, Number(chainId), prizePool, prizeVaults);
-
-    /* -------------------------------------------------- */
-    // Write to Disk
-    /* -------------------------------------------------- */
+    await writeDepositorsToOutput(outDirWithSchema, Number(chainId), prizePool, prizeVaults);
     await writeCombinedWinnersToOutput(outDirWithSchema, prizeVaults);
 
     /* -------------------------------------------------- */
@@ -164,16 +156,33 @@ export default class CompileWinners extends Command {
   }
 }
 
-export function writeDepositorsToOutput(
+export async function writeDepositorsToOutput(
   outDir: string,
-  chainId: string,
+  chainId: number,
   prizePoolAddress: string,
   prizeVaults: PrizeVault[]
-): void {
-  console.log("Writing depositors to output ...");
+): Promise<void> {
+  console.log("# Writing depositors & winners to output ...");
+  console.log("");
 
   for (const prizeVault of Object.values(prizeVaults)) {
-    const userAddresses = prizeVault.accounts.map((account) => account.user.address);
+    const vaultId = prizeVault.id.toLowerCase() as Address;
+    const userAddresses = prizeVault.accounts.map((account) => account.user.address as Address);
+
+    console.log(`  -- Processing vault ${vaultId}`);
+    console.log(`     Computing winners ...`);
+    const fxnToAttempt = async () => {
+      return await computeWinners({
+        chainId,
+        rpcUrl: process.env.RPC_URL as string,
+        prizePoolAddress: prizePoolAddress as Address,
+        vaultAddress: vaultId as Address,
+        userAddresses,
+        multicallBatchSize: 1024,
+      });
+    };
+
+    const winners = await tryNTimes({ fxnToAttempt, times: 5, interval: 1 });
 
     const vaultJson = {
       chainId,
@@ -181,53 +190,75 @@ export function writeDepositorsToOutput(
       vaultAddress: prizeVault.id,
       multicallBatchSize: 1024,
       userAddresses,
+      winners,
     };
 
+    console.log(`     Writing ${outDir}${vaultId}.json`);
+    console.log(``);
     writeToOutput(outDir, prizeVault.id.toLowerCase(), vaultJson);
   }
 }
 
-export async function writeWinnersToOutput(
-  outDirWithSchema: string,
-  chainId: number,
-  prizePool: string,
-  vaults: PrizeVault[]
-): Promise<void> {
-  console.log("# Writing winners to output ...");
+export function writeCombinedWinnersToOutput(outDir: string, vaults: PrizeVault[]): void {
+  console.log("# Writing combined winners.json file ...");
   console.log("");
 
   let winnersJson: Record<string, Winner[]> = {};
   for (const vault of Object.values(vaults)) {
-    const vaultId = vault.id.toLowerCase();
-    const fileJson = readFileSync(`${outDirWithSchema}${vaultId}.json`, "utf8");
-
-    const userAddresses = JSON.parse(fileJson).userAddresses;
-
-    const winners = await computeWinners({
-      chainId,
-      rpcUrl: process.env.RPC_URL as string,
-      prizePoolAddress: `0x${prizePool.replace(/^0x/, "")}`,
-      vaultAddress: `0x${vaultId.replace(/^0x/, "")}`,
-      userAddresses,
-      multicallBatchSize: 1024,
-    });
-
-    winnersJson["winners"] = winners;
-
-    console.log(`Writing ${outDirWithSchema}${vaultId}-winners.json`);
-    writeToOutput(outDirWithSchema, `${vaultId}-winners`, winnersJson);
-  }
-}
-
-export function writeCombinedWinnersToOutput(outDirWithSchema: string, vaults: PrizeVault[]): void {
-  console.log("Writing combined winners to output ...");
-
-  let winnersJson: Record<string, Winner[]> = {};
-  for (const vault of Object.values(vaults)) {
-    const fileJson = readFileSync(`${outDirWithSchema}${vault.id.toLowerCase()}.json`, "utf8");
+    const fileJson = readFileSync(`${outDir}${vault.id.toLowerCase()}.json`, "utf8");
 
     winnersJson[vault.id.toLowerCase()] = JSON.parse(fileJson).winners;
   }
 
-  writeToOutput(outDirWithSchema, "winners", winnersJson);
+  console.log(`     Writing ${outDir}winners.json`);
+  writeToOutput(outDir, "winners", winnersJson);
+}
+
+/**
+ * @async
+ * @function tryNTimes<T> Tries to resolve a {@link Promise<T>} N times, with a delay between each attempt.
+ * @param {Object} options Options for the attempts.
+ * @param {() => Promise<T>} options.fxnToAttempt The {@link Promise<T>} to try to resolve.
+ * @param {number} [options.times=5] The maximum number of attempts (must be greater than 0).
+ * @param {number} [options.interval=1] The interval of time between each attempt in seconds.
+ * @returns {Promise<T>} The resolution of the {@link Promise<T>}.
+ */
+export async function tryNTimes<T>({
+  fxnToAttempt,
+  times = 5,
+  interval = 1,
+}: {
+  fxnToAttempt: () => Promise<T>;
+  times?: number;
+  interval?: number;
+}): Promise<Awaited<T>> {
+  if (times < 1) {
+    throw new Error(`Bad argument: 'times' must be greater than 0, but ${times} was received.`);
+  }
+
+  let attemptCount = 0;
+  while (true) {
+    try {
+      if (attemptCount > 0) {
+        console.log(`     Retrying:`);
+      }
+      console.log(`     Attempt #${attemptCount + 1} ...`);
+      return await fxnToAttempt();
+    } catch (error) {
+      console.log("     error:");
+      console.error(`     ${error}`);
+      if (++attemptCount >= times) throw error;
+    }
+
+    await delay(interval);
+  }
+}
+
+/**
+ * @function delay Delays the execution of an action.
+ * @param {number} time The time to wait in seconds.
+ * @returns {Promise<void>}
+ */
+export function delay(time: number): Promise<void> {
+  return new Promise<void>((resolve) => setTimeout(resolve, time * 1000));
 }

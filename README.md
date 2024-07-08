@@ -96,7 +96,8 @@ EXAMPLES
     "0x07967251f6db5f9d095119379bd8fc4fce60b3e1",
     "0x084039db4e3c6775eabfc59cbd3725d3d9a6d752"
     // ...
-  ]
+  ],
+  "winners": {}
 }
 ```
 
