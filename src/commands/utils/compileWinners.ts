@@ -19,13 +19,16 @@ import { getPrizePoolByAddress } from "../../lib/utils/getPrizePoolByAddress.js"
 import { writeToOutput } from "../../lib/utils/writeOutput.js";
 import { Winner } from "../../types.js";
 
+const DEFAULT_RETRY_ATTEMPTS = 10;
+const DEFAULT_RETRY_INTERVAL = 5;
+
 /**
  * @name CompileWinners
  */
 // @ts-ignore
 export default class CompileWinners extends Command {
   static description =
-    "Outputs the previous draw's depositors with a non-zero balance for a PrizePool to a JSON file in a target directory.";
+    "Finds draw's depositors with a non-zero balance for a PrizePool, then computes who won and outputs all this data to a target output directory.";
   static examples = [
     `$ ptv5 utils compileWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./depositors --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
        Running utils:compileWinners on chainId: 1 for prizePool: 0x0 using latest drawID
@@ -224,8 +227,8 @@ export function writeCombinedWinnersToOutput(outDir: string, vaults: PrizeVault[
  */
 export async function tryNTimes<T>({
   fxnToAttempt,
-  times = 5,
-  interval = 1,
+  times = DEFAULT_RETRY_ATTEMPTS,
+  interval = DEFAULT_RETRY_INTERVAL,
 }: {
   fxnToAttempt: () => Promise<T>;
   times?: number;

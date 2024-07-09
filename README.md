@@ -13,8 +13,7 @@ The `@generationsoftware/pt-v5-cli` [node module package](https://www.npmjs.com/
 Primary CLI Commands (help)
 
 ```sh
-npx @generationsoftware/pt-v5-cli help utils vaultAccounts
-npx @generationsoftware/pt-v5-cli help utils concatWinners
+npx @generationsoftware/pt-v5-cli help utils compileWinners
 ```
 
 ### Setup
@@ -61,28 +60,26 @@ USAGE
 
 # Commands
 
-## Compute Vault Accounts
+## Compile Winners
 
 ```sh-session
-ptv5 utils vaultAccounts
+ptv5 utils compileWinners
 ```
 
-Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.
-
-JSON is in the format required by the [@GenerationSoftware/foundry-winner-calc](https://github.com/@GenerationSoftware/foundry-winner-calc) repo to quickly winners.
+Finds draw's depositors with a non-zero balance for a PrizePool, then computes who won and outputs all this data to a target output directory.
 
 Pass the `chainId`, `prizePool`, `outDir`, `contractJsonUrl` and `subgraphUrl` to compute and locally save the results.
 
 ```
 USAGE
-  $ ptv5 utils vaultAccounts --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1' --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
+  $ ptv5 utils compileWinners --chainId 1 --outDir ./winners --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1' --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
 
 DESCRIPTION
-  Computes the previous draw's depositors with a non-zero balance for a PrizePool to a target output directory.
+  Finds draw's depositors with a non-zero balance for a PrizePool, then computes who won and outputs all this data to a target output directory.
 
 EXAMPLES
-  $ ptv5 utils vaultAccounts --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
-    Running utils:vaultAccounts on chainId: 1
+  $ ptv5 utils compileWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./winners --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
+    Running utils:compileWinners on chainId: 1
 ```
 
 ## Vaults Files ([vaultAddress].json)
@@ -97,91 +94,17 @@ EXAMPLES
     "0x084039db4e3c6775eabfc59cbd3725d3d9a6d752"
     // ...
   ],
-  "winners": {}
+  "winners": [
+    {
+      "user": "0xBBBBBBBBBBBB0af42Df6C28e5cd79458C102f6",
+      "prizes": {
+        "3": [3, 7, 30],
+        "4": [11, 55]
+      }
+    }
+    // ...
+  ]
 }
-```
-
-## Status File (status.json)
-
-```json
-{
-  "status": "LOADING",
-  "createdAt": "11"
-}
-```
-
-### Success
-
-```json
-{
-  "status": "SUCCESS",
-  "createdAt": 1693423691768,
-  "updatedAt": 1693423805132,
-  "runtime": 114,
-  "meta": {
-    "numVaults": 7,
-    "numTiers": 3,
-    "numPrizeIndices": 21,
-    "numAccounts": 3830
-  }
-}
-```
-
-### Failure
-
-```json
-{
-  "status": "FAILURE",
-  "createdAt": "11",
-  "updatedAt": "33",
-  "runtime": "22",
-  "error": "ErrorCode"
-}
-```
-
-## Concat Winners
-
-```sh-session
-ptv5 utils concatWinners
-```
-
-Receives all of the winners by vault JSON files created by the [foundry-winner-calc](https://github.com/GenerationSoftware/foundry-winner-calc?tab=readme-ov-file) tool and ties them into one winners.json file. Therefore is dependent on `foundry-winner-calc` running prior to concatWinners being run.
-
-Pass the `chainId`, `prizePool`, `outDir`, `contractJsonUrl` and `subgraphUrl` to compute and locally save the results.
-
-```
-USAGE
-  $ ptv5 utils concatWinners --chainId 1 --outDir ./temp --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1' --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
-
-DESCRIPTION
-  Ingests foundry-winner-calc output files and ties them into one winners.json file.
-
-EXAMPLES
-  $ ptv5 utils concatWinners --chainId 1 --prizePool 0x0000000000000000000000000000000000000000 --outDir ./temp --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
-    Running utils:concatWinners on chainId: 1
-```
-
-## Prizes File (prizes.json)
-
-```json
-[
-  {
-    "vault": "0x0bfe04201c496a9994b920deb6087a60bdadfbbb",
-    "winner": "0x07967251f6db5f9d095119379bd8fc4fce60b3e1",
-    "tier": 3,
-    "prizeIndex": 11,
-    "claimed": true,
-    "amount": "1633936709514027714"
-  },
-  {
-    "vault": "0x0bfe04201c496a9994b920deb6087a60bdadfbbb",
-    "winner": "0x084039db4e3c6775eabfc59cbd3725d3d9a6d752",
-    "tier": 2,
-    "prizeIndex": 1,
-    "claimed": false,
-    "amount": "1633936709514027714"
-  }
-]
 ```
 
 ## Status File (status.json)
@@ -251,5 +174,5 @@ DESCRIPTION
 You can test the CLI while developing by using the following, with whichever chain & prizePool flags you want to test with:
 
 ```
-./bin/run.js utils vaultAccounts --chainId 80001 -o ./temp -p '0xA32C8f94191c9295634f0034eb2b0e2749e77974'
+./bin/dev.js utils compileWinners --chainId 1 --outDir ./winners --prizePool '0xdd4d117723C257CEe402285D3aCF218E9A8236E1' --contractJsonUrl 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-testnet/.../contracts.json' --subgraphUrl 'https://api.studio.thegraph.com/query/...'
 ```
