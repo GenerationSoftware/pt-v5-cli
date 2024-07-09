@@ -37,7 +37,7 @@ direnv allow
 #### LIST OF ENVIRONMENT VARIABLES
 
 ```sh
-JSON_RPC_URI: Your Infura/Alchemy/etc JSON RPC URI
+JSON_RPC_URL: Your Infura/Alchemy/etc JSON RPC URI
 ```
 
 # ⌨️ CLI Installation

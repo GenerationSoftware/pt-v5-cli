@@ -1,3 +1,4 @@
+import yn from "yn";
 import { readFileSync } from "fs";
 import { Command, Flags } from "@oclif/core";
 import {
@@ -116,6 +117,9 @@ export default class CompileWinners extends Command {
     console.log(`contractJsonUrl:  ${contractJsonUrl}`);
     console.log(`subgraphUrl:      ${subgraphUrl}`);
     console.log(`outDir:           ${outDir}`);
+    console.log(`---`);
+    console.log(`JSON_RPC_URL:     ${process.env.JSON_RPC_URL}`);
+    console.log(`DEBUG:            ${yn(process.env.DEBUG)}`);
 
     /* -------------------------------------------------- */
     // Create Status File
@@ -177,11 +181,12 @@ export async function writeDepositorsToOutput(
     const fxnToAttempt = async () => {
       return await computeWinners({
         chainId,
-        rpcUrl: process.env.RPC_URL as string,
+        rpcUrl: process.env.JSON_RPC_URL as string,
         prizePoolAddress: prizePoolAddress as Address,
         vaultAddress: vaultId as Address,
         userAddresses,
-        multicallBatchSize: 1024,
+        multicallBatchSize: 1024 * 8,
+        debug: yn(process.env.DEBUG),
       });
     };
 

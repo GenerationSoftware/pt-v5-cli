@@ -6,7 +6,7 @@
     "url": "https://github.com/generationsoftware"
   },
   "license": "MIT",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0-beta.1",
   "repository": "https://github.com/generationsoftware/pt-v5-cli",
   "homepage": "https://github.com/generationsoftware/pt-v5-cli",
   "bugs": "https://github.com/generationsoftware/pt-v5-cli/issues",
@@ -41,14 +41,8 @@
     "@oclif/core": "^3",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^4",
-    "ajv": "^8.10.0",
     "ethers": "^5.7.2",
-    "graphql": "^16.3.0",
-    "graphql-request": "^4.0.0",
-    "lodash": "^4.17.0",
-    "lodash.pickby": "^4.6.0",
-    "piscina": "^3.2.0",
-    "spawn-promise": "^0.1.8"
+    "yn": "^5.0.0"
   },
   "devDependencies": {
     "@oclif/test": "^3",
