@@ -8,7 +8,7 @@ import {
   PrizePoolInfo,
 } from "@generationsoftware/pt-v5-utils-js";
 import * as core from "@actions/core";
-import { computeWinners } from "@generationsoftware/tevm-winner-calc";
+import { computeWinners } from "@generationsoftware/js-winner-calc";
 import { Address } from "viem";
 
 import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
