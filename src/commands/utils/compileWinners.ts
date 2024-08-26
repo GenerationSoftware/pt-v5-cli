@@ -1,4 +1,5 @@
 import yn from "yn";
+import { Contract } from "ethers";
 import { readFileSync } from "fs";
 import { Command, Flags } from "@oclif/core";
 import {
@@ -82,15 +83,17 @@ export default class CompileWinners extends Command {
       readProvider
     );
 
-    const drawId = await prizePoolContract?.getLastAwardedDrawId();
+    const drawId = await getLastAwaradedDrawId(prizePoolContract);
 
     this.warn("Failed to fetch depositors (" + error + ")");
     const statusFailure = updateStatusFailure(CompileWinners.statusLoading.createdAt, error);
 
-    const outDirWithSchema = createOutputPath(outDir, chainId, prizePool.toLowerCase(), drawId);
-    writeToOutput(outDirWithSchema, "status", statusFailure);
-    createExitCode(error, this);
+    if (drawId) {
+      const outDirWithSchema = createOutputPath(outDir, chainId, prizePool.toLowerCase(), drawId);
+      writeToOutput(outDirWithSchema, "status", statusFailure);
+    }
 
+    createExitCode(error, this);
     core.setOutput("error", error);
   }
 
@@ -109,17 +112,25 @@ export default class CompileWinners extends Command {
       prizePool,
       readProvider
     );
-    const drawId = await prizePoolContract?.getLastAwardedDrawId();
+    const drawId = await getLastAwaradedDrawId(prizePoolContract);
 
     console.log(`chainId:          ${chainId}`);
     console.log(`prizePool:        ${prizePool.toLowerCase()}`);
-    console.log(`drawId:           #${drawId.toString()}`);
+    console.log(`drawId:           #${drawId ? drawId : ""}`);
     console.log(`contractJsonUrl:  ${contractJsonUrl}`);
     console.log(`subgraphUrl:      ${subgraphUrl}`);
     console.log(`outDir:           ${outDir}`);
     console.log(`---`);
     console.log(`JSON_RPC_URL:     ${process.env.JSON_RPC_URL}`);
     console.log(`DEBUG:            ${yn(process.env.DEBUG)}`);
+
+    if (!drawId) {
+      console.log("");
+      console.warn(
+        "Exiting early, could not query prizePoolContract.getLastAwaradedDrawId() (PrizePool has not been awarded yet?)"
+      );
+      return;
+    }
 
     /* -------------------------------------------------- */
     // Create Status File
@@ -268,4 +279,19 @@ export async function tryNTimes<T>({
  */
 export function delay(time: number): Promise<void> {
   return new Promise<void>((resolve) => setTimeout(resolve, time * 1000));
+}
+
+async function getLastAwaradedDrawId(prizePoolContract: Contract): Promise<string | undefined> {
+  let drawId;
+  try {
+    drawId = await prizePoolContract.getLastAwardedDrawId();
+  } catch (e: any) {
+    console.warn(
+      "Unable to query prizePoolContract.getLastAwaradedDrawId(), PrizePool has not been awarded yet?"
+    );
+    console.log("");
+    // console.warn(e);
+  }
+
+  return drawId;
 }
