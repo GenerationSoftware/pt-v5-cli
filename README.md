@@ -38,6 +38,11 @@ direnv allow
 
 ```sh
 JSON_RPC_URL: Your Infura/Alchemy/etc JSON RPC URI
+
+# OPTIONAL:
+
+DEBUG: if set to true will print more debug information when calculating winners
+PRIZE_TIERS_TO_COMPUTE: optional CSV list of prize tiers to compute - example: '0,2,3,5'
 ```
 
 # ⌨️ CLI Installation

@@ -114,15 +114,16 @@ export default class CompileWinners extends Command {
     );
     const drawId = await getLastAwaradedDrawId(prizePoolContract);
 
-    console.log(`chainId:          ${chainId}`);
-    console.log(`prizePool:        ${prizePool.toLowerCase()}`);
-    console.log(`drawId:           #${drawId ? drawId : ""}`);
-    console.log(`contractJsonUrl:  ${contractJsonUrl}`);
-    console.log(`subgraphUrl:      ${subgraphUrl}`);
-    console.log(`outDir:           ${outDir}`);
-    console.log(`---`);
-    console.log(`JSON_RPC_URL:     ${process.env.JSON_RPC_URL}`);
-    console.log(`DEBUG:            ${yn(process.env.DEBUG)}`);
+    console.log(`chainId:                ${chainId}`);
+    console.log(`prizePool:              ${prizePool.toLowerCase()}`);
+    console.log(`drawId:                 #${drawId ? drawId : ""}`);
+    console.log(`contractJsonUrl:        ${contractJsonUrl}`);
+    console.log(`subgraphUrl:            ${subgraphUrl}`);
+    console.log(`outDir:                 ${outDir}`);
+    console.log(`--- ENV ---`);
+    console.log(`JSON_RPC_URL:           ${process.env.JSON_RPC_URL}`);
+    console.log(`DEBUG:                  ${yn(process.env.DEBUG)}`);
+    console.log(`PRIZE_TIERS_TO_COMPUTE: ${process.env.PRIZE_TIERS_TO_COMPUTE}`);
 
     if (!drawId) {
       console.log("");
@@ -196,8 +197,9 @@ export async function writeDepositorsToOutput(
         prizePoolAddress: prizePoolAddress as Address,
         vaultAddress: vaultId as Address,
         userAddresses,
-        multicallBatchSize: 1024 * 8,
+        multicallBatchSize: 1024 * 2,
         debug: yn(process.env.DEBUG),
+        prizeTiers: process.env.PRIZE_TIERS_TO_COMPUTE?.split(",").map((tier) => Number(tier)),
       });
     };
 
