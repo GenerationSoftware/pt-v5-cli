@@ -63,6 +63,11 @@ export default class CompileWinners extends Command {
       description: "URL of the Subgraph API",
       required: true,
     }),
+    multicallAddress: Flags.string({
+      char: "m",
+      description: "Custom address for a Multicall contract",
+      required: false,
+    }),
   };
 
   static args = [];
@@ -72,7 +77,7 @@ export default class CompileWinners extends Command {
   public async catch(error: any): Promise<any> {
     console.log(error, "_error compileWinners");
     const { flags } = await this.parse(CompileWinners);
-    const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
+    const { chainId, prizePool, outDir, contractJsonUrl } = flags;
 
     const readProvider = getProvider();
 
@@ -99,7 +104,7 @@ export default class CompileWinners extends Command {
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(CompileWinners);
-    const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl } = flags;
+    const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl, multicallAddress } = flags;
 
     console.log("");
     console.log(`Running "utils:compileWinners"`);
@@ -120,6 +125,7 @@ export default class CompileWinners extends Command {
     console.log(`contractJsonUrl:        ${contractJsonUrl}`);
     console.log(`subgraphUrl:            ${subgraphUrl}`);
     console.log(`outDir:                 ${outDir}`);
+    console.log(`multicallAddress:       ${multicallAddress}`);
     console.log(`--- ENV ---`);
     console.log(`JSON_RPC_URL:           ${process.env.JSON_RPC_URL}`);
     console.log(`DEBUG:                  ${yn(process.env.DEBUG)}`);
@@ -153,7 +159,13 @@ export default class CompileWinners extends Command {
     /* -------------------------------------------------- */
     // Write Depositors & Winners to Disk
     /* -------------------------------------------------- */
-    await writeDepositorsToOutput(outDirWithSchema, Number(chainId), prizePool, prizeVaults);
+    await writeDepositorsToOutput(
+      outDirWithSchema,
+      Number(chainId),
+      prizePool,
+      prizeVaults,
+      multicallAddress as Address
+    );
     await writeCombinedWinnersToOutput(outDirWithSchema, prizeVaults);
 
     /* -------------------------------------------------- */
@@ -179,7 +191,8 @@ export async function writeDepositorsToOutput(
   outDir: string,
   chainId: number,
   prizePoolAddress: string,
-  prizeVaults: PrizeVault[]
+  prizeVaults: PrizeVault[],
+  multicallAddress?: Address
 ): Promise<void> {
   console.log("# Writing depositors & winners to output ...");
   console.log("");
@@ -197,6 +210,7 @@ export async function writeDepositorsToOutput(
         prizePoolAddress: prizePoolAddress as Address,
         vaultAddress: vaultId as Address,
         userAddresses,
+        multicallAddress,
         multicallBatchSize: 1024 * 2,
         debug: yn(process.env.DEBUG),
         prizeTiers: process.env.PRIZE_TIERS_TO_COMPUTE?.split(",").map((tier) => Number(tier)),
