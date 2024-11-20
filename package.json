@@ -6,7 +6,7 @@
     "url": "https://github.com/generationsoftware"
   },
   "license": "MIT",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "repository": "https://github.com/generationsoftware/pt-v5-cli",
   "homepage": "https://github.com/generationsoftware/pt-v5-cli",
   "bugs": "https://github.com/generationsoftware/pt-v5-cli/issues",
@@ -36,7 +36,7 @@
     "@ethersproject/bignumber": "^5.5.0",
     "@ethersproject/contracts": "^5.5.0",
     "@ethersproject/providers": "^5.5.3",
-    "@generationsoftware/pt-v5-utils-js": "1.2.4",
+    "@generationsoftware/pt-v5-utils-js": "1.2.5",
     "@generationsoftware/js-winner-calc": "1.2.1",
     "@oclif/core": "^3",
     "@oclif/plugin-help": "^6",
