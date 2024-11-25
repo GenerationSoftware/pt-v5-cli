@@ -1,3 +1,12 @@
-export function createOutputPath(outputDir: string, chainId: string, address: string, drawId: string): string {
-  return `${outputDir}/${chainId}/${address.toLowerCase()}/draw/${drawId}/`
+export function createOutputPath(
+  outputDir: string,
+  chainId: string,
+  prizePoolAddress: string,
+  drawId: string
+): string {
+  return `${outputDir}/${drawPath(chainId, prizePoolAddress, drawId)}`;
+}
+
+export function drawPath(chainId: string, prizePoolAddress: string, drawId: string): string {
+  return `${chainId}/${prizePoolAddress.toLowerCase()}/draw/${drawId}/`;
 }

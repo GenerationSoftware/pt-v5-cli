@@ -1,4 +1,4 @@
-export { createOutputPath } from "./createOutputPath.js";
+export { createOutputPath, drawPath } from "./createOutputPath.js";
 export { updateStatusFailure, updateStatusSuccess, createStatus } from "./status.js";
 export { createExitCode } from "./createExitCode.js";
 export { getAllPrizeVaultsAndAccountsWithBalance } from "./getAllPrizeVaultsAndAccountsWithBalance.js";

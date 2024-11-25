@@ -1,4 +1,5 @@
 import yn from "yn";
+import nodeFetch from "node-fetch";
 import { readFileSync } from "fs";
 import { Command, Flags } from "@oclif/core";
 import {
@@ -13,11 +14,13 @@ import { Address } from "viem";
 
 import { createStatus, updateStatusFailure, updateStatusSuccess } from "../../lib/utils/status.js";
 import { getProvider } from "../../lib/utils/getProvider.js";
-import { createOutputPath } from "../../lib/utils/createOutputPath.js";
+import { createOutputPath, drawPath } from "../../lib/utils/createOutputPath.js";
 import { createExitCode } from "../../lib/utils/createExitCode.js";
 import { getAllPrizeVaultsAndAccountsWithBalance } from "../../lib/utils/getAllPrizeVaultsAndAccountsWithBalance.js";
 import { writeToOutput } from "../../lib/utils/writeOutput.js";
 import { Winner } from "../../types.js";
+
+import { Status } from "../../types.js";
 
 const DEFAULT_RETRY_ATTEMPTS = 10;
 const DEFAULT_RETRY_INTERVAL = 5;
@@ -66,6 +69,17 @@ export default class CompileWinners extends Command {
       description: "Custom address for a Multicall contract",
       required: false,
     }),
+    remoteStatusUrl: Flags.string({
+      char: "r",
+      description:
+        "Remote URL where status.json would exist (eg. 'https://raw.githubusercontent.com/GenerationSoftware/pt-v5-winners/refs/heads/main/winners/vaultAccounts')",
+      required: false,
+    }),
+    localFileStatusPath: Flags.string({
+      char: "l",
+      description: "Local file path where status.json would exist (eg. './winners/vaultAccounts')",
+      required: false,
+    }),
   };
 
   static args = [];
@@ -83,7 +97,7 @@ export default class CompileWinners extends Command {
     const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
     const drawId = prizePoolInfo.drawId;
 
-    this.warn("Failed to fetch depositors (" + error + ")");
+    this.warn("Failed to calculate winners (" + error + ")");
     const statusFailure = updateStatusFailure(CompileWinners.statusLoading.createdAt, error);
 
     if (drawId) {
@@ -102,7 +116,16 @@ export default class CompileWinners extends Command {
 
   public async run(): Promise<void> {
     const { flags } = await this.parse(CompileWinners);
-    const { chainId, prizePool, outDir, contractJsonUrl, subgraphUrl, multicallAddress } = flags;
+    const {
+      chainId,
+      prizePool,
+      outDir,
+      contractJsonUrl,
+      subgraphUrl,
+      multicallAddress,
+      remoteStatusUrl,
+      localFileStatusPath,
+    } = flags;
 
     console.log("");
     console.log(`Running "utils:compileWinners"`);
@@ -114,17 +137,24 @@ export default class CompileWinners extends Command {
     const drawId = prizePoolInfo.drawId;
     const isDrawFinalized = prizePoolInfo.isDrawFinalized;
 
+    console.log(`--- ARGS ---`);
     console.log(`chainId:                ${chainId}`);
     console.log(`prizePool:              ${prizePool.toLowerCase()}`);
-    console.log(`drawId:                 #${drawId ? drawId : ""}`);
     console.log(`contractJsonUrl:        ${contractJsonUrl}`);
     console.log(`subgraphUrl:            ${subgraphUrl}`);
     console.log(`outDir:                 ${outDir}`);
+    console.log(`--- OPTIONAL ARGS ---`);
     console.log(`multicallAddress:       ${multicallAddress}`);
+    console.log(`remoteStatusUrl:        ${remoteStatusUrl}`);
+    console.log(`localFileStatusPath:    ${localFileStatusPath}`);
     console.log(`--- ENV ---`);
     console.log(`JSON_RPC_URL:           ${process.env.JSON_RPC_URL}`);
     console.log(`DEBUG:                  ${yn(process.env.DEBUG)}`);
     console.log(`PRIZE_TIERS_TO_COMPUTE: ${process.env.PRIZE_TIERS_TO_COMPUTE}`);
+    console.log(`--- STATUS ---`);
+    console.log(`drawId:                 #${drawId ? drawId : ""}`);
+    console.log(`isDrawFinalized:        ${isDrawFinalized}`);
+    console.log(``);
 
     if (!drawId) {
       console.log("");
@@ -143,10 +173,32 @@ export default class CompileWinners extends Command {
       return;
     }
 
-    if (status === "success") {
-      console.log("");
-      console.warn("Winners have already been calculated for current draw.");
-      return;
+    if (remoteStatusUrl) {
+      const status = await downloadRemoteStatusJson(
+        remoteStatusUrl,
+        chainId,
+        prizePool.toLowerCase(),
+        drawId.toString()
+      );
+      if (status?.status === "SUCCESS") {
+        console.log("");
+        console.warn("Winners have already been calculated for current draw.");
+        return;
+      }
+    }
+
+    if (localFileStatusPath) {
+      const status = readLocalFileStatusJson(
+        localFileStatusPath,
+        chainId,
+        prizePool.toLowerCase(),
+        drawId.toString()
+      );
+      if (status?.status === "SUCCESS") {
+        console.log("");
+        console.warn("Winners have already been calculated for current draw.");
+        return;
+      }
     }
 
     /* -------------------------------------------------- */
@@ -303,3 +355,67 @@ export async function tryNTimes<T>({
 export function delay(time: number): Promise<void> {
   return new Promise<void>((resolve) => setTimeout(resolve, time * 1000));
 }
+
+/**
+ * Downloads the status.json for provided drawId if it exists
+ *
+ * @param {remoteStatusUrl} string
+ *
+ * @returns {Status} Parsed status.json object
+ */
+export const downloadRemoteStatusJson = async (
+  remoteStatusUrl: string,
+  chainId: string,
+  prizePoolAddress: string,
+  drawId: string,
+  fetch?: any
+): Promise<Status> => {
+  let status;
+
+  if (!fetch) {
+    fetch = nodeFetch;
+  }
+
+  try {
+    const outputPath = drawPath(chainId, prizePoolAddress, drawId);
+    const url = `${remoteStatusUrl}/${outputPath}status.json`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(response.statusText);
+    } else {
+      status = await response.json();
+    }
+  } catch (err) {
+    console.log(err);
+  }
+
+  return status;
+};
+
+/**
+ * Reads the status.json from the local filesystem if it exists for the provided drawId
+ *
+ * @param {readLocalFileStatusJson} string
+ *
+ * @returns {Status} Parsed status.json object
+ */
+export const readLocalFileStatusJson = (
+  localFileStatusPath: string,
+  chainId: string,
+  prizePoolAddress: string,
+  drawId: string
+): Status => {
+  let status;
+
+  const path = drawPath(chainId, prizePoolAddress, drawId);
+  const statusPath = `${localFileStatusPath}/${path}status.json`;
+  const fileJson = readFileSync(statusPath, "utf8");
+
+  if (!fileJson) {
+    console.warn("no status.json file?");
+  } else {
+    status = JSON.parse(fileJson);
+  }
+
+  return status;
+};
