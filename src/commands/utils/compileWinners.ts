@@ -1,5 +1,4 @@
 import yn from "yn";
-import { Contract } from "ethers";
 import { readFileSync } from "fs";
 import { Command, Flags } from "@oclif/core";
 import {
@@ -17,7 +16,6 @@ import { getProvider } from "../../lib/utils/getProvider.js";
 import { createOutputPath } from "../../lib/utils/createOutputPath.js";
 import { createExitCode } from "../../lib/utils/createExitCode.js";
 import { getAllPrizeVaultsAndAccountsWithBalance } from "../../lib/utils/getAllPrizeVaultsAndAccountsWithBalance.js";
-import { getPrizePoolByAddress } from "../../lib/utils/getPrizePoolByAddress.js";
 import { writeToOutput } from "../../lib/utils/writeOutput.js";
 import { Winner } from "../../types.js";
 
@@ -81,20 +79,20 @@ export default class CompileWinners extends Command {
 
     const readProvider = getProvider();
 
-    const prizePoolContract = await getPrizePoolByAddress(
-      Number(chainId),
-      contractJsonUrl,
-      prizePool,
-      readProvider
-    );
-
-    const drawId = await getLastAwaradedDrawId(prizePoolContract);
+    const contracts = await downloadContractsBlob(contractJsonUrl);
+    const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
+    const drawId = prizePoolInfo.drawId;
 
     this.warn("Failed to fetch depositors (" + error + ")");
     const statusFailure = updateStatusFailure(CompileWinners.statusLoading.createdAt, error);
 
     if (drawId) {
-      const outDirWithSchema = createOutputPath(outDir, chainId, prizePool.toLowerCase(), drawId);
+      const outDirWithSchema = createOutputPath(
+        outDir,
+        chainId,
+        prizePool.toLowerCase(),
+        drawId.toString()
+      );
       writeToOutput(outDirWithSchema, "status", statusFailure);
     }
 
@@ -111,13 +109,10 @@ export default class CompileWinners extends Command {
     console.log("");
 
     const readProvider = getProvider();
-    const prizePoolContract = await getPrizePoolByAddress(
-      Number(chainId),
-      contractJsonUrl,
-      prizePool,
-      readProvider
-    );
-    const drawId = await getLastAwaradedDrawId(prizePoolContract);
+    const contracts = await downloadContractsBlob(contractJsonUrl);
+    const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
+    const drawId = prizePoolInfo.drawId;
+    const isDrawFinalized = prizePoolInfo.isDrawFinalized;
 
     console.log(`chainId:                ${chainId}`);
     console.log(`prizePool:              ${prizePool.toLowerCase()}`);
@@ -134,23 +129,35 @@ export default class CompileWinners extends Command {
     if (!drawId) {
       console.log("");
       console.warn(
-        "Exiting early, could not query prizePoolContract.getLastAwaradedDrawId() (PrizePool has not been awarded yet?)"
+        "Exiting early, could not query prizePoolContract.getLastAwardedDrawId() (PrizePool yet to be awarded?)"
       );
+      console.warn("Or possibly wrong JSON_RPC_URL");
+      return;
+    }
+
+    if (isDrawFinalized) {
+      console.log("");
+      console.warn(
+        "Current draw is finalized. Wait for next awarded draw before calculating winners."
+      );
+      return;
+    }
+
+    if (status === "success") {
+      console.log("");
+      console.warn("Winners have already been calculated for current draw.");
       return;
     }
 
     /* -------------------------------------------------- */
     // Create Status File
     /* -------------------------------------------------- */
-    const outDirWithSchema = createOutputPath(outDir, chainId, prizePool, drawId);
+    const outDirWithSchema = createOutputPath(outDir, chainId, prizePool, drawId.toString());
     writeToOutput(outDirWithSchema, "status", CompileWinners.statusLoading);
 
     /* -------------------------------------------------- */
     // Data Fetching && Compute
     /* -------------------------------------------------- */
-    const contracts = await downloadContractsBlob(contractJsonUrl);
-    const prizePoolInfo: PrizePoolInfo = await getPrizePoolInfo(readProvider, contracts);
-
     const { prizeVaults, numAccounts } = await getAllPrizeVaultsAndAccountsWithBalance(
       subgraphUrl,
       prizePoolInfo
@@ -295,19 +302,4 @@ export async function tryNTimes<T>({
  */
 export function delay(time: number): Promise<void> {
   return new Promise<void>((resolve) => setTimeout(resolve, time * 1000));
-}
-
-async function getLastAwaradedDrawId(prizePoolContract: Contract): Promise<string | undefined> {
-  let drawId;
-  try {
-    drawId = await prizePoolContract.getLastAwardedDrawId();
-  } catch (e: any) {
-    console.warn(
-      "Unable to query prizePoolContract.getLastAwaradedDrawId(), PrizePool has not been awarded yet?"
-    );
-    console.log("");
-    // console.warn(e);
-  }
-
-  return drawId;
 }
