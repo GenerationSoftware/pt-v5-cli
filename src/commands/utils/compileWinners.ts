@@ -409,12 +409,12 @@ export const readLocalFileStatusJson = (
 
   const path = drawPath(chainId, prizePoolAddress, drawId);
   const statusPath = `${localFileStatusPath}/${path}status.json`;
-  const fileJson = readFileSync(statusPath, "utf8");
 
-  if (!fileJson) {
-    console.warn("no status.json file?");
-  } else {
+  try {
+    const fileJson = readFileSync(statusPath, "utf8");
     status = JSON.parse(fileJson);
+  } catch (e) {
+    console.warn(`Error reading file at ${statusPath}, likely does not exist yet`);
   }
 
   return status;
